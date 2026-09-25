@@ -122,4 +122,4 @@ pip install pandas sqlalchemy pymysql -i https://pypi.tuna.tsinghua.edu.cn/simpl
 ## 下一步
 
 环境准备完成后，进入 W2 核心任务：亲手写四个工具。
-详见《ZCode-修订版四周计划.md》W2 部分 + 《ZCode-03-W2工具设计草案.md》。
+详见《ZCode-修订版计划.md》（review）W2 部分 + 《ZCode-03-W2工具设计草案.md》。
