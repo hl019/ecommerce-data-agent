@@ -6,9 +6,31 @@
 
 ## 前置条件
 
-- MySQL 已安装并启动（推荐 MySQL 8.0+）
-- Navicat 或 MySQL Workbench 已安装（用于可视化管理）
-- Python 虚拟环境已激活（OpenManus 的 `.venv`）
+- **MySQL 已部署到 D:\mysql**（ZCode 于 2026-09-25 完成：华为云镜像下载 8.0.29 → 解压 → my.ini → 数据目录初始化 → 控制台模式自测通过）。**还剩两步需要你的管理员权限**，见下节；
+- Navicat 或 MySQL Workbench 已安装（用于可视化管理，可选）；
+- Python 虚拟环境已激活（OpenManus 的 `.venv`）。
+
+## Step 0：激活 MySQL 服务（仅两步，约 3 分钟）
+
+1. **右键** `install_mysql_service.bat` → **以管理员身份运行**（注册 MySQL80 服务 + 启动 + 加 PATH）。
+   看到 `[OK] MySQL80 installed and RUNNING` = 成功。
+2. **新开一个终端**（PATH 生效需要新终端），设 root 密码（密码只在你手里，进记事本，不进 git 不发任何人）：
+   ```
+   mysql -u root
+   ```
+   （此刻是空密码，直接回车进得去）然后在 `mysql>` 提示符下：
+   ```sql
+   ALTER USER 'root'@'localhost' IDENTIFIED BY '你自己设的密码';
+   exit
+   ```
+
+**四条验收**（考核官口径，全绿才算完）：
+1. `services.msc` 里 MySQL80 状态「正在运行」；
+2. `netstat -an | findstr 3306` 有 LISTENING；
+3. 新终端 `mysql -u root -p` 输密码能登录；
+4. 双击 `一键初始化数据库.bat` → 输密码 → `✓ 初始化完成` + 199/100/1000。
+
+## 数据导入（Step 0 完成后）
 
 ---
 
