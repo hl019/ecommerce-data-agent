@@ -2,7 +2,7 @@
 
 USE ecommerce_agent;
 
--- 1. 三张表行数（应为 199 / 100 / 1000）
+-- 1. 三张表行数（应为 200 / 100 / 1000）
 SELECT 'Customers' AS tbl, COUNT(*) AS cnt FROM Customers
 UNION ALL SELECT 'Products', COUNT(*) FROM Products
 UNION ALL SELECT 'Transactions', COUNT(*) FROM Transactions;

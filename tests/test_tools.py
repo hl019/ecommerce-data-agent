@@ -76,13 +76,13 @@ def find_html_path(text: str):
 # ============ 工具 1：sales_sql_query ============
 t1 = SalesSQLQuery()
 
-def check_count_199(result):
+def check_count_200(result):
     text = output_text(result)
-    assert "199" in text, f"输出里应包含 Customers 总行数 199，实际输出: {text[:200]}"
+    assert "200" in text, f"输出里应包含 Customers 总行数 200，实际输出: {text[:200]}"
 
-run("sales_sql_query", "SELECT COUNT(*) 返回 199",
+run("sales_sql_query", "SELECT COUNT(*) 返回 200",
     lambda: t1.execute(sql="SELECT COUNT(*) AS cnt FROM Customers"),
-    check_count_199)
+    check_count_200)
 
 def check_readonly_guard(result):
     err = error_text(result)

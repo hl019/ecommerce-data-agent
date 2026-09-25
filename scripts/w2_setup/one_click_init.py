@@ -17,6 +17,7 @@ import getpass
 import os
 import re
 import sys
+import warnings
 from pathlib import Path
 
 import pandas as pd
@@ -28,7 +29,7 @@ DDL_FILE = HERE / "01_create_database.sql"
 DATA_DIR = Path(r"D:\projects\hl019-ecommerce-viaapi\data")
 DB_NAME = "ecommerce_agent"
 
-EXPECTED_ROWS = {"Customers": 199, "Products": 100, "Transactions": 1000}
+CSV_TABLES = [("Customers.csv", "Customers"), ("Products.csv", "Products"), ("Transactions.csv", "Transactions")]
 
 
 def get_password() -> str:
@@ -66,13 +67,20 @@ def import_data(password: str):
         ("Products.csv", "Products", []),
         ("Transactions.csv", "Transactions", ["TransactionDate"]),
     ]
+    # 清空必须子表先于父表（外键约束），导入必须父表先于子表——顺序反了必报 1451
+    with engine.begin() as conn:
+        for table in ["Transactions", "Customers", "Products"]:
+            conn.exec_driver_sql(f"DELETE FROM {table}")
     for filename, table, date_cols in specs:
         df = pd.read_csv(DATA_DIR / filename)
         for col in date_cols:
             df[col] = pd.to_datetime(df[col], errors="coerce")
         with engine.begin() as conn:
-            conn.exec_driver_sql(f"DELETE FROM {table}")  # 幂等清空（保留表结构和外键）
-            df.to_sql(table, conn, if_exists="append", index=False)
+            with warnings.catch_warnings():
+                # pandas 假警告：Windows 上 MySQL lower_case_table_names=1，表名实际小写存储，
+                # pandas 写完后按原大小写回查不到就告警——数据无损，屏蔽以免误导
+                warnings.filterwarnings("ignore", message="The provided table name", category=UserWarning)
+                df.to_sql(table, conn, if_exists="append", index=False)
         print(f"[2/3] {filename} → {table}：导入 {len(df)} 行")
 
 
@@ -83,15 +91,17 @@ def verify(password: str) -> bool:
     )
     ok = True
     with engine.connect() as conn:
-        for table, expected in EXPECTED_ROWS.items():
+        for filename, table in CSV_TABLES:
+            expected = len(pd.read_csv(DATA_DIR / filename))  # 期望值以 CSV 实际行数为准，不硬编码
             cnt = conn.exec_driver_sql(f"SELECT COUNT(*) FROM {table}").scalar()
             mark = "OK" if cnt == expected else f"!! 期望 {expected}"
             if cnt != expected:
                 ok = False
             print(f"[3/3] {table}: {cnt} 行  [{mark}]")
         print("\n--- 验证查询：月度销售额 Top3（W2 工具 1 将让 Agent 自己跑这类 SQL）---")
+        # pymysql 是 pyformat 参数风格：SQL 里字面的 % 必须写成 %%，否则被当占位符
         rows = conn.exec_driver_sql(
-            "SELECT DATE_FORMAT(TransactionDate, '%Y-%m') AS month, "
+            "SELECT DATE_FORMAT(TransactionDate, '%%Y-%%m') AS month, "
             "ROUND(SUM(TotalValue), 2) AS sales "
             "FROM Transactions GROUP BY month ORDER BY sales DESC LIMIT 3"
         ).fetchall()

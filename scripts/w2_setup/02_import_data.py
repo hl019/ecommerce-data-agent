@@ -68,7 +68,7 @@ def verify_import():
         count = result['cnt'][0]
         print(f"  {table}: {count} 行")
 
-    print("\n>>> 如果行数与 CSV 一致（199/100/1000），导入成功！")
+    print("\n>>> 如果行数与 CSV 一致（200/100/1000），导入成功！")
     print(">>> 下一步：用 Navicat 打开 ecommerce_agent 库，查看三张表的数据。")
 
 if __name__ == "__main__":
@@ -84,7 +84,14 @@ if __name__ == "__main__":
         print("  pip install pandas sqlalchemy pymysql -i https://pypi.tuna.tsinghua.edu.cn/simple")
         exit(1)
 
-    # 导入三张表
+    # 幂等清空：子表先于父表（外键约束），重复跑不翻倍
+    engine = create_engine(DATABASE_URL)
+    with engine.begin() as conn:
+        for table in ["Transactions", "Customers", "Products"]:
+            conn.exec_driver_sql(f"DELETE FROM {table}")
+    print("已清空旧数据（如有）")
+
+    # 导入三张表（父表先于子表）
     import_csv_to_mysql("Customers.csv", "Customers", date_columns=["SignupDate"])
     import_csv_to_mysql("Products.csv", "Products")
     import_csv_to_mysql("Transactions.csv", "Transactions", date_columns=["TransactionDate"])

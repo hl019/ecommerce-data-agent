@@ -11,7 +11,7 @@ USE ecommerce_agent;
 
 -- 2. 建表（三张表，对应 CSV 结构）
 
--- Customers 表（199 行）
+-- Customers 表（200 行）
 CREATE TABLE IF NOT EXISTS Customers (
   CustomerID VARCHAR(10) PRIMARY KEY COMMENT '客户ID，如 C0001',
   CustomerName VARCHAR(100) NOT NULL COMMENT '客户姓名',

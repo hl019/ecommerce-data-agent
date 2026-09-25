@@ -28,7 +28,7 @@
 1. `services.msc` 里 MySQL80 状态「正在运行」；
 2. `netstat -an | findstr 3306` 有 LISTENING；
 3. 新终端 `mysql -u root -p` 输密码能登录；
-4. 双击 `一键初始化数据库.bat` → 输密码 → `✓ 初始化完成` + 199/100/1000。
+4. 双击 `一键初始化数据库.bat` → 输密码 → `✓ 初始化完成` + 200/100/1000。
 
 ## 数据导入（Step 0 完成后）
 
@@ -42,7 +42,7 @@
 python D:\projects\ecommerce-data-agent\scripts\w2_setup\one_click_init.py
 ```
 
-脚本会依次：建库建表（执行 `01_create_database.sql`）→ 清空重导三张 CSV（幂等，重复跑不翻倍）→ 验证行数（199/100/1000）→ 跑一条真实的月度销售额 SQL 给你看。密码运行时输入（不回显、不落盘），或提前 `set MYSQL_PASSWORD=你的密码`。
+脚本会依次：建库建表（执行 `01_create_database.sql`）→ 清空重导三张 CSV（幂等，重复跑不翻倍）→ 验证行数（200/100/1000）→ 跑一条真实的月度销售额 SQL 给你看。密码运行时输入（不回显、不落盘），或提前 `set MYSQL_PASSWORD=你的密码`。
 
 看到 `✓ 初始化完成，W2 可以开工了` = 数据库就绪。也可在 Navicat 里执行 `03_verify.sql` 四段查询二次确认。
 
@@ -81,7 +81,7 @@ pip install pandas sqlalchemy pymysql -i https://pypi.tuna.tsinghua.edu.cn/simpl
 
 3. 看到以下输出 = 成功：
    ```
-   ✓ 成功导入 199 行到 Customers 表
+   ✓ 成功导入 200 行到 Customers 表
    ✓ 成功导入 100 行到 Products 表
    ✓ 成功导入 1000 行到 Transactions 表
    ```
@@ -91,7 +91,7 @@ pip install pandas sqlalchemy pymysql -i https://pypi.tuna.tsinghua.edu.cn/simpl
 ## 验证
 
 用 Navicat 打开 `ecommerce_agent` 库，双击任意表查看数据：
-- Customers：199 行
+- Customers：200 行
 - Products：100 行
 - Transactions：1000 行
 
@@ -111,7 +111,7 @@ pip install pandas sqlalchemy pymysql -i https://pypi.tuna.tsinghua.edu.cn/simpl
 ## 数据说明
 
 三张表来自 `hl019-ecommerce-viaapi` 仓库（你的电商数据分析项目）：
-- **Customers**：199 位客户（ID/姓名/地区/注册日期）
+- **Customers**：200 位客户（ID/姓名/地区/注册日期）
 - **Products**：100 件商品（ID/名称/品类/单价）
 - **Transactions**：1000 笔交易（ID/客户/商品/时间/数量/总额）
 
