@@ -12,7 +12,19 @@
 
 ---
 
-## 三步完成环境准备
+## 方式一：一键初始化（推荐，考核官验收口径）
+
+双击 `一键初始化数据库.bat`，或在 OpenManus 虚拟环境里执行：
+
+```bash
+python D:\projects\ecommerce-data-agent\scripts\w2_setup\one_click_init.py
+```
+
+脚本会依次：建库建表（执行 `01_create_database.sql`）→ 清空重导三张 CSV（幂等，重复跑不翻倍）→ 验证行数（199/100/1000）→ 跑一条真实的月度销售额 SQL 给你看。密码运行时输入（不回显、不落盘），或提前 `set MYSQL_PASSWORD=你的密码`。
+
+看到 `✓ 初始化完成，W2 可以开工了` = 数据库就绪。也可在 Navicat 里执行 `03_verify.sql` 四段查询二次确认。
+
+## 方式二：手动三步（理解每一步在干什么时用）
 
 ### Step 1：建库建表（10 分钟）
 
