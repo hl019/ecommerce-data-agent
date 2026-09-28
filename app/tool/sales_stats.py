@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 """
-工具 2：sales_stats —— pandas 统计分析工具（枚举参数，模型几乎不会传错）
+工具 2：sales_stats —— pandas 统计分析工具（填空式骨架）
 
-━━━ 学生亲手写的部分（考核官红线，ZCode 不代填）━━━
-1. description：说清 5 种分析类型各回答什么业务问题（模型靠这个选类型）
-2. parameters：analysis_type 用 enum 枚举（monthly/category/user/top_products/repurchase）
-   ——设计要点：枚举参数 > 自由文本参数（呼应考核题 6）
-3. execute()：把你 hl019-ecommerce-viaapi/extracted_code.py 74-181 行的
-   groupby/agg/merge 逻辑拆成 5 个独立分析函数，按 analysis_type 分发
-   数据源：CSV（DATA_DIR 三张表），不依赖 MySQL
-   错误处理清单见设计草案工具 2 表格（非法枚举值回显合法值/CSV缺失/日期解析失败）
+预习包：《ZCode-W2工具2预习包.md》（review\）——填空指引、引导问题、PASS 标准都在那里。
+你的蓝本：extracted_code.py 74-181 行（你自己写过的 groupby/agg/merge 逻辑）。
+红线：description / parameters / execute / 错误处理全部学生亲手写。
 """
+import json
+
+import pandas as pd
+
 from app.tool.base import BaseTool, ToolResult
+
+VALID_TYPES = ["monthly", "category", "user", "top_products", "repurchase"]
 
 
 class SalesStats(BaseTool):
@@ -19,27 +20,38 @@ class SalesStats(BaseTool):
 
     name: str = "sales_stats"
 
-    # TODO(学生): 写 description——把 5 种 analysis_type 各自的用途说清楚
+    # ── 填空 A：description ─────────────────────────────
+    # 引导问题：模型靠哪句话决定传 monthly 还是 repurchase？
+    # 五种类型各回答什么业务问题，用一句话各写清楚。
     description: str = ""
 
-    # TODO(学生): 写 parameters JSON Schema
-    #   关键：analysis_type 的 schema 用 "enum": [...] 限死合法值
+    # ── 填空 B：parameters ──────────────────────────────
+    # B1：analysis_type 用 enum 限死（关键字 "enum"，值就是 VALID_TYPES）
+    # B2：top_n 的 type 与默认值语义说明（为什么不进 required？）
+    # B3：required 只放 analysis_type
     parameters: dict = {}
 
-    # CSV 数据目录（复用你已有的电商仓库数据）
+    # CSV 数据目录（复用你已有的电商仓库数据；不依赖 MySQL）
     DATA_DIR: str = r"D:\projects\hl019-ecommerce-viaapi\data"
 
     async def execute(self, analysis_type: str, top_n: int = 10) -> ToolResult:
         """
-        TODO(学生): 亲手实现。建议结构：
+        ── 填空 1：读 CSV + 解析日期 ──
+        三张表从 DATA_DIR 读；日期列 pd.to_datetime(errors="coerce")。
+        引导问题：文件缺失/日期全解析失败时，fail_response 写什么模型才看得懂？
 
-        if analysis_type == "monthly":    → 月度销售额（extracted_code.py 你写过）
-        elif analysis_type == "category": → 品类分布
-        elif analysis_type == "user":     → 用户分析（头部用户贡献）
-        elif analysis_type == "top_products": → Top N 商品
-        elif analysis_type == "repurchase":   → 复购率
-        else: → fail_response，并把合法值列表回显给模型（它能自我纠正）
+        ── 填空 2：五个分析函数 ──
+        monthly / category / user / top_products / repurchase 各一个独立函数，
+        逻辑拆自 extracted_code.py 74-181（你写过的，别重写轮子）。
+        引导问题：一个 200 行大函数 vs 五个小函数，测试和复用上差在哪？
 
-        输出：JSON 字符串（列名用中文，模型可直接引用），success_response 返回
+        ── 填空 3：分发 + 非法枚举兜底 ──
+        认识的值路由到对应函数；不认识的 → return self.fail_response(...)，
+        错误信息里必须回显 VALID_TYPES（模型靠它自我纠正）。
+        引导问题：这和工具 1 的只读守卫是同一个思想吗？（代码层兜底+给模型可行动的反馈）
+
+        ── 填空 4：输出 JSON ──
+        结果转 list[dict]，json.dumps(..., ensure_ascii=False)，列名中文。
+        引导问题：ensure_ascii 不关，中文列名会变成什么？模型还读得懂吗？
         """
-        raise NotImplementedError("sales_stats 还没实现——这是你 W2 D3-D4 的任务，5 个分析函数拆自你自己的 notebook")
+        raise NotImplementedError("工具 2 还没写——按填空 1-4 顺序来，写完跑 tests/test_tools.py")
