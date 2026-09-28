@@ -9,6 +9,8 @@
 本骨架只给：类定义 + 空的填空位 + 引导问题。不许抄预习包里的"答案方向"原文当交付——
 带写时你要能对着考核官讲出每一行为什么这么写。
 """
+import os
+import pymysql
 from app.tool.base import BaseTool, ToolResult
 
 
@@ -22,7 +24,10 @@ class SalesSQLQuery(BaseTool):
     #   A1. 这个工具"能做什么"一句话怎么说？（模型靠这句话决定要不要调它）
     #   A2. "什么时候该调它、什么时候不该"要不要写进去？（对比：问题要画图时该调谁？）
     #   A3. 返回格式（markdown 表格）要不要告诉模型？为什么？
-    description: str = ""
+    description: str =  ("对电商销售数据库执行只读的 SQL 查询（SELECT），返回 markdown 格式的表格结果。"
+        "当你需要查询具体的销售数据、客户信息或交易明细时调用本工具，例如某月的销售额、"
+        "客户数量、订单明细等。注意：本工具只支持 SELECT 只读查询，不能修改任何数据；"
+        "当需要把查询结果画成图表时，请改用 plot_chart 工具。")
 
     # ── 填空 B：parameters（JSON Schema，四步填）──────────
     # 步骤 B1：外层骨架 {"type": "object", "properties": { … }, "required": [ … ]}
@@ -32,7 +37,20 @@ class SalesSQLQuery(BaseTool):
     # 步骤 B3：加 "row_limit"：type 是什么？要不要给默认值语义的说明？
     # 步骤 B4：required 数组里放谁？为什么 row_limit 不放？
     # 格式蓝本：lab 01 实验 2 的 tools 定义 / app/tool/ask_human.py
-    parameters: dict = {}
+    parameters: dict =  {
+        "type": "object",
+        "properties": {
+            "sql": {
+                "type": "string",
+                "description": "要执行的 SELECT 只读查询语句。只允许 SELECT，禁止 INSERT/UPDATE/DELETE/DROP 等写操作。",
+            },
+            "row_limit": {
+                "type": "integer",
+                "description": "最多返回的行数，默认 50，用于控制返回长度、避免超出上下文窗口。",
+            },
+        },
+        "required": ["sql"],
+    }
 
     async def execute(self, sql: str, row_limit: int = 50) -> ToolResult:
         """
@@ -58,4 +76,43 @@ class SalesSQLQuery(BaseTool):
         任何异常 → except 里 self.fail_response(可读错误)；finally 里关连接。
         引导问题：fail_response 的错误信息最终会到哪里去？（回忆 toolcall.py execute_tool 的兜底路径）
         """
-        raise NotImplementedError("工具 1 还没写——按填空 1-5 顺序来，写完跑 tests/test_tools.py")
+        # 填空 1：只读守卫——代码层兜底，不靠模型自觉
+        clean_sql = sql.strip()
+        if not clean_sql.upper().startswith("SELECT"):
+            return self.fail_response(f"只允许 SELECT 只读查询，拒绝执行：{sql}")
+        # 填空 2：建立连接（conn 先设为 None，finally 里要用）
+        conn = None
+        try:
+            conn = pymysql.connect(
+                host="127.0.0.1",
+                user="root",
+                password=os.environ.get("MYSQL_PASSWORD", ""),
+                database="ecommerce_agent",
+                charset="utf8mb4",
+            )
+
+            # 填空 3：执行并限量取数
+            with conn.cursor() as cursor:
+                cursor.execute(clean_sql)
+                rows = cursor.fetchmany(row_limit)
+                columns = [d[0] for d in cursor.description] if cursor.description else []
+
+            # 填空 4：拼 markdown 表格
+            if not columns:
+                return self.success_response("查询完成，但没有返回列（可能不是 SELECT）")
+            header = "| " + " | ".join(columns) + " |"
+            sep = "|" + "---|" * len(columns)
+            lines = [header, sep]
+            for r in rows:
+                cells = [str(v) if v is not None else "" for v in r]
+                lines.append("| " + " | ".join(cells) + " |")
+            table = "\n".join(lines)
+
+            # 填空 5：成功收尾
+            return self.success_response(table)
+        except Exception as e:
+            return self.fail_response(f"查询失败：{e}")
+        finally:
+            if conn:
+                conn.close()
+
