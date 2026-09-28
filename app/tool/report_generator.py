@@ -14,6 +14,9 @@
    ④ HTML 模板拼接：f-string 或 Jinja2 二选一（建议 Jinja2——简历多一个词）
       图表内嵌：读 plot_chart 生成的 HTML 里 <div>...</div> 段 + plotly.js CDN script 标签
    ⑤ 落盘 workspace/reports/时间戳_标题.html，success_response 返回路径
+   ⑥ （0928 增补·提示非实现）输出末尾附「本次任务消耗 N tokens ≈ ¥X」：
+      N 从哪来、¥ 怎么算、跨多次模型调用怎么累计——这三个问题自己想清楚再写，
+      它是面试"效果数字"的第三足（耗时/成本/查表数）；不引入 Redis/评测集
    面试考点：为什么报告由代码生成而不是模型直接吐 HTML？（确定性：结构与内容分离）
 """
 from app.tool.base import BaseTool, ToolResult
