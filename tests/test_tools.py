@@ -54,12 +54,16 @@ def run(tool_name, case_name, coro_factory, checker):
 
 
 def output_text(result) -> str:
-    """兼容 ToolResult / dict / str 三种返回形态"""
+    """兼容 ToolResult / dict / str；工具返回 error 时透出真实原因而非 None（0930 环境故障暴露的报告盲区）"""
     if isinstance(result, str):
         return result
     if isinstance(result, dict):
         return json.dumps(result, ensure_ascii=False)
-    return str(getattr(result, "output", result))
+    out = getattr(result, "output", None)
+    err = getattr(result, "error", None)
+    if out is None and err:
+        return f"[TOOL ERROR] {err}"
+    return str(out)
 
 
 def error_text(result):
