@@ -18,3 +18,7 @@ reports/
 # os
 Thumbs.db
 .DS_Store
+
+# IDE
+.idea/
+*.iml

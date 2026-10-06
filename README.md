@@ -3,13 +3,15 @@
 > 一句业务问题（如"分析 7 月销售下滑原因"）→ Agent 自动任务分解 → SQL/Pandas 分析 → Plotly 图表 → HTML 运营报告。
 > 基于 [OpenManus](https://github.com/FoundationAgents/OpenManus)（MIT 协议）二次开发，学习笔记参考 [ai-agent-interview-guide](https://github.com/bcefghj/ai-agent-interview-guide)。
 
-## 项目状态：W2 自有工具层 3/4（更新于 2026-10-02）
+## 项目状态：W2 工具层 ✅ 完成，MVP 端到端已跑通（更新于 2026-10-06）
+
+> 里程碑：2026-10-06 实现「一句业务问题 → Agent 自动查数 / 画图 / 生成含交互图表与 token 成本统计的 HTML 报告」端到端闭环（4 步 ReAct，自然终止）。
 
 | 周 | 里程碑 | 状态 |
 |---|---|---|
 | W1 | 环境搭建、首跑 ReAct 循环、核心源码精读、MySQL 数据环境、JD 调研 | ✅ 已完成（2026-09-25） |
-| W2 | 自有工具层：`sales_sql_query` ✅ / `sales_stats` ✅ / `plot_chart` ✅ / `report_generator` 🚧（schema 与核心逻辑手写，三个已完成工具的全部自动化用例通过） | 🚧 进行中 3/4 |
-| W3 | RAG：真实文档知识库（金蝶公开文档 + 公开电商 SOP）+ 会话记忆 | ⬜ |
+| W2 | 自有工具层：`sales_sql_query` ✅ / `sales_stats` ✅ / `plot_chart` ✅ / `report_generator` ✅ + EcommerceAgent 注册 + 场景化提示词；8 项自动化用例全绿 | ✅ 已完成（2026-10-06） |
+| W3 | RAG：真实文档知识库（金蝶公开文档 + 公开电商 SOP）+ 引用来源 + 会话记忆 | 🚧 即将开工 |
 | W4 | 机器学习工具（Lookalike 相似客户）+ Streamlit UI + Docker 部署 | ⬜ |
 | W5-W6 | README/架构图/演示打磨 + 简历与面试准备 | ⬜ |
 
