@@ -134,7 +134,12 @@ class ReportGenerator(BaseTool):
 
         charts_html = ""
         for p in valid_charts:
-            charts_html += f'<iframe src="{p}" width="100%" height="430" style="border:none"></iframe>\n'
+            # 关键：iframe 的 src 由浏览器按「报告文件所在目录」解析，
+            # 而 p 是相对「进程工作目录(CWD)」的路径。两者基准不同，
+            # 直接写 p 会被解析成 workspace/reports/workspace/charts/... → 裂图。
+            # 所以必须换算成「相对报告目录」的路径（../charts/xxx.html）。
+            rel = os.path.relpath(p, self.REPORTS_DIR).replace("\\", "/")
+            charts_html += f'<iframe src="{rel}" width="100%" height="430" style="border:none"></iframe>\n'
         for p in missing_charts:
             charts_html += f'<p style="color:#c00">⚠ 图表未找到，已跳过：{p}</p>\n'
 
