@@ -22,6 +22,10 @@ from pydantic import Field
 from app.agent.toolcall import ToolCallAgent
 from app.prompt.ecommerce import NEXT_STEP_PROMPT, SYSTEM_PROMPT
 from app.tool import Terminate, ToolCollection
+from app.tool.sales_sql_query import SalesSQLQuery
+from app.tool.sales_stats import SalesStats
+from app.tool.plot_chart import PlotChart
+from app.tool.report_generator import ReportGenerator
 
 
 class EcommerceAgent(ToolCallAgent):
@@ -41,6 +45,10 @@ class EcommerceAgent(ToolCallAgent):
     # Terminate 必须保留——它是循环的正常出口（W1 你亲眼看它终止过斐波那契任务）
     available_tools: ToolCollection = Field(
         default_factory=lambda: ToolCollection(
+            SalesSQLQuery(),
+            SalesStats(),
+            PlotChart(),
+            ReportGenerator(),
             Terminate(),
         )
     )
