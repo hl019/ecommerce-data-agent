@@ -152,5 +152,5 @@ class PlotChart(BaseTool):
         safe_title = "".join(c for c in title if c not in '\\/:*?"<>|')[:30] or "chart"
         filename = f"{datetime.now():%Y%m%d_%H%M%S}_{safe_title}.html"
         path = os.path.join(self.CHARTS_DIR, filename)
-        fig.write_html(path)
+        fig.write_html(path, include_plotlyjs="cdn")
         return self.success_response(f"图表已生成：{path}（用浏览器打开查看）")
