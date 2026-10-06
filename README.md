@@ -30,6 +30,10 @@ ReAct 循环 · Function Calling · 只读 SQL 守卫 · Pandas 聚合分析 · 
 
 - [学习笔记索引](docs/learning/) —— 环境搭建、源码带读、工具设计、踩坑故事
 
+## 数据说明
+
+演示数据集为 1000 笔交易合成样本（CSV 与初始化脚本见 `scripts/w2_setup/`）。`sales_sql_query` 读 MySQL、`sales_stats` 读 CSV，两工具在 demo 阶段为**同源快照**（均由 `one_click_init.py` 从同一份 CSV 幂等重建，跑一次即同步）；生产化会收敛为单库单源。
+
 ## 运行产物说明
 
 `workspace/charts/` 与 `workspace/reports/` 为 Agent 运行产物：每执行一次任务生成一套带时间戳的图表/报告文件（时间戳防互相覆盖），**不入库、可随时整体清空重跑**，不影响项目功能。clone 后按 `scripts/w2_setup/README.md` 初始化数据、填 `config/config.toml`，用 `python scripts/run_agent.py "你的业务问题"` 即可重新生成全套演示产物。
