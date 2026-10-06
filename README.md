@@ -30,6 +30,10 @@ ReAct 循环 · Function Calling · 只读 SQL 守卫 · Pandas 聚合分析 · 
 
 - [学习笔记索引](docs/learning/) —— 环境搭建、源码带读、工具设计、踩坑故事
 
+## 运行产物说明
+
+`workspace/charts/` 与 `workspace/reports/` 为 Agent 运行产物：每执行一次任务生成一套带时间戳的图表/报告文件（时间戳防互相覆盖），**不入库、可随时整体清空重跑**，不影响项目功能。clone 后按 `scripts/w2_setup/README.md` 初始化数据、填 `config/config.toml`，用 `python scripts/run_agent.py "你的业务问题"` 即可重新生成全套演示产物。
+
 ## 致谢与许可
 
 核心框架来自 OpenManus（MIT），感谢原作者团队。本项目遵循 MIT 协议开源。
