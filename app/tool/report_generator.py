@@ -15,6 +15,7 @@
 import json
 import os
 from datetime import datetime
+from html import escape
 
 from app.tool.base import BaseTool, ToolResult
 
@@ -130,7 +131,7 @@ class ReportGenerator(BaseTool):
         # 填空 3：拼 HTML 片段
         sections_html = ""
         for s in sections:
-            sections_html += f"<h2>{s.get('heading', '')}</h2>\n<p>{s.get('content', '')}</p>\n"
+            sections_html += f"<h2>{escape(s.get('heading', ''))}</h2>\n<p>{escape(s.get('content', ''))}</p>\n"
 
         charts_html = ""
         for p in valid_charts:

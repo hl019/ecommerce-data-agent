@@ -10,6 +10,8 @@
 带写时你要能对着考核官讲出每一行为什么这么写。
 """
 import os
+import re
+
 import pymysql
 from app.tool.base import BaseTool, ToolResult
 
@@ -76,10 +78,20 @@ class SalesSQLQuery(BaseTool):
         任何异常 → except 里 self.fail_response(可读错误)；finally 里关连接。
         引导问题：fail_response 的错误信息最终会到哪里去？（回忆 toolcall.py execute_tool 的兜底路径）
         """
-        # 填空 1：只读守卫——代码层兜底，不靠模型自觉
-        clean_sql = sql.strip()
-        if not clean_sql.upper().startswith("SELECT"):
+
+        # 填空 1：只读守卫（加强版）——剥注释 / 白名单开头 / 禁分号 / 防 CTE 绕过 / 防写文件
+        clean_sql = re.sub(r"^\s*(--[^\n]*\n|/\*.*?\*/)+", "", sql, flags=re.S).strip()
+        upper_sql = clean_sql.upper()
+
+        if not upper_sql.startswith(("SELECT", "WITH", "(")):
             return self.fail_response(f"只允许 SELECT 只读查询，拒绝执行：{sql}")
+        if ";" in clean_sql:
+            return self.fail_response("只允许单条查询语句，不接受分号分隔的多语句。")
+        if upper_sql.startswith("WITH") and re.search(r"(^|\))\s*(UPDATE|DELETE)\b", upper_sql):
+            return self.fail_response(f"CTE 后只允许接 SELECT，检测到写操作，拒绝执行：{sql}")
+        if re.search(r"\bINTO\s+(OUTFILE|DUMPFILE)\b", upper_sql):
+            return self.fail_response(f"禁止 SELECT ... INTO OUTFILE，拒绝执行：{sql}")
+
         # 填空 2：建立连接（conn 先设为 None，finally 里要用）
         conn = None
         try:
@@ -107,6 +119,9 @@ class SalesSQLQuery(BaseTool):
                 cells = [str(v) if v is not None else "" for v in r]
                 lines.append("| " + " | ".join(cells) + " |")
             table = "\n".join(lines)
+            # 截断提示：取满 row_limit 行 → 可能还有更多数据没取
+            if len(rows) == row_limit:
+                table += f"\n\n> 注意：结果已按 row_limit={row_limit} 截断，可能还有更多数据未显示。"
 
             # 填空 5：成功收尾
             return self.success_response(table)

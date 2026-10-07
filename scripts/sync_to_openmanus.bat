@@ -10,6 +10,7 @@ copy /Y "%REPO%\app\tool\sales_sql_query.py"  "%OM%\app\tool\sales_sql_query.py"
 copy /Y "%REPO%\app\tool\sales_stats.py"      "%OM%\app\tool\sales_stats.py"      >nul
 copy /Y "%REPO%\app\tool\plot_chart.py"       "%OM%\app\tool\plot_chart.py"       >nul
 copy /Y "%REPO%\app\tool\report_generator.py" "%OM%\app\tool\report_generator.py" >nul
+copy /Y "%REPO%\app\tool\kb_search.py"       "%OM%\app\tool\kb_search.py"       >nul
 
 echo Sync done:
 echo   app\agent\ecommerce.py   -^> %OM%\app\agent\
