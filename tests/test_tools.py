@@ -98,6 +98,25 @@ run("sales_sql_query", "只读守卫拒绝 DROP TABLE",
     lambda: t1.execute(sql="DROP TABLE Customers"),
     check_readonly_guard)
 
+# ── 守卫加强版对照用例（1007 考核官裁决②验收，需 MySQL 在跑）──
+def check_cte_pass(result):
+    err = error_text(result)
+    assert not err, f"合法 CTE 应被放行（守卫加强版），实际被拒: {err[:120]}"
+
+run("sales_sql_query", "CTE 合法查询应放行（WITH...SELECT）",
+    lambda: t1.execute(sql="WITH m AS (SELECT 1 AS one) SELECT one FROM m"),
+    check_cte_pass)
+
+def check_cte_delete_blocked(result):
+    combined = (error_text(result) or "") + output_text(result)
+    assert "拒绝" in combined or "只允许" in combined or "写" in combined, \
+        f"WITH...DELETE 必须被守卫拒绝，实际: {combined[:120]}"
+    assert "1045" not in combined and "2003" not in combined, "应被守卫拦截，而不是走到连接层"
+
+run("sales_sql_query", "WITH...DELETE 绕过尝试应被拒",
+    lambda: t1.execute(sql="WITH m AS (SELECT 1 AS one) DELETE FROM 不存在的表xyz WHERE one=m.one"),
+    check_cte_delete_blocked)
+
 # ============ 工具 2：sales_stats ============
 t2 = SalesStats()
 
