@@ -34,6 +34,7 @@ def main():
     """
     TODO(学生)：主流程五步（对照《ZCode-W3-语料建立.md》第4节的四元组）——
     1) 遍历 RAW_DIR 下 *.txt，从文件头部固定格式里解析 来源URL/抓取日期/收录理由（格式见语料文档）
+       （URL 口径小项：MANIFEST 里百分号编码/中文原样混用，解析时 urllib.parse.unquote 归一再入库）
     2) 每篇过 chunk_document 得块列表
     3) 全部块调智谱 embedding-3（批量，写法从 lab03 步骤2 搬）
     4) chromadb PersistentClient(KB_DIR).get_or_create_collection(COLLECTION)
