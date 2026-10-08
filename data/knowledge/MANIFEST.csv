@@ -1,1 +1,7 @@
 file,url,fetch_date,title,reason
+raw/kingdee/库存状态.txt,https://help.open.kingdee.com/dokuwiki/doku.php?id=%E5%BA%93%E5%AD%98%E7%8A%B6%E6%80%81,2026-10-08,库存状态,实施常答问题：库存状态（可用/待检/冻结/不良等）设错，会导致销售出库单或生产领料单无法选择该库存
+raw/kingdee/应付款管理.txt,https://help.open.kingdee.com/dokuwiki/doku.php?id=应付款管理,2026-10-08,应付款管理,实施常答问题：应付款四个业务环节（应付确认→到期付款→付款核销→期末处理）、两种立账模式（暂估应付/业务应付），以及应付单/付款单/发票之间的核销关系
+raw/kingdee/采购管理.txt,https://help.open.kingdee.com/dokuwiki/doku.php?id=%E9%87%87%E8%B4%AD%E7%AE%A1%E7%90%86,2026-10-08,采购管理,实施常答问题：采购订单 → 采购入库 → 应付单 的流程衔接，以及入库单审核自动生成应付单等实施常配项
+raw/kingdee/销售管理.txt,https://help.open.kingdee.com/dokuwiki/doku.php?id=%E9%94%80%E5%94%AE%E7%AE%A1%E7%90%86,2026-10-08,销售管理,"实施常答问题：销售订单 → 发货 → 销售出库 的流程；以及""不可销售""库存状态会把销售出库单的库存选择拦掉（与《库存状态》一篇互相印证）"
+raw/kingdee/总账或凭证.txt,https://help.open.kingdee.com/dokuwiki/doku.php?id=%E6%80%BB%E8%B4%A6,2026-10-08,总账或凭证,"实施常答问题：业务单据如何通过智能会计平台生成业务凭证/总账凭证；立账模式（业务应付/暂估应付）如何影响""应付账款""凭证的生成（与《应付款管理》一篇互相印证）"
+raw/ecom-sop/干扰项_电商无关长文.txt,https://post.smzdm.com/p/a6p7mowo/,2026-10-08,干扰项_电商无关长文,干扰项：故意放入与电商无关的长文（咖啡推荐），用于验证 kb_search 会不会把不相关的块硬塞进检索结果（对应语料方案第 5 篇）
