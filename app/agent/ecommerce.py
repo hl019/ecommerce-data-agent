@@ -26,6 +26,7 @@ from app.tool.sales_sql_query import SalesSQLQuery
 from app.tool.sales_stats import SalesStats
 from app.tool.plot_chart import PlotChart
 from app.tool.report_generator import ReportGenerator
+from app.tool.kb_search import KBSearch
 
 
 class EcommerceAgent(ToolCallAgent):
@@ -49,6 +50,7 @@ class EcommerceAgent(ToolCallAgent):
             SalesStats(),
             PlotChart(),
             ReportGenerator(),
+            KBSearch(),
             Terminate(),
         )
     )
