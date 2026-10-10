@@ -10,6 +10,11 @@
     D:\\projects\\OpenManus\\.venv\\Scripts\\python.exe D:\\projects\\ecommerce-data-agent\\scripts\\w3_setup\\ingest_corpus.py
 先 $env:ZHIPU_API_KEY = "sk-..."（key 只走环境变量）
 
+★ 重跑方式（考核官§六确认口径）：本脚本设计为【全量扫描 → 幂等重建】——
+  语料目录以后加新文件（如 ecom-metrics 三篇），**重跑一次即可**，不产生重复块/脏数据
+  （幂等靠什么实现，见 main 第 4 步提示；跑两次然后数块数，自己验证）。
+扫描范围 = RAW_DIR 下所有子目录递归：kingdee\\(5篇) + ecom-sop\\(干扰项) + ecom-metrics\\(闭环后新增3篇)
+
 红线同工具：核心逻辑学生亲手写。骨架只给步骤骨架 + 线索。
 """
 import os
