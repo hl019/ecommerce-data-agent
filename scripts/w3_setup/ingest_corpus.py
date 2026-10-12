@@ -84,7 +84,7 @@ def chunk_document(text, min_len=200, max_len=600, overlap=50):
         # ── 超过 max_len（比如某段超长没有任何标题）→ 硬切，留重叠 ──
         if cur_len > max_len:
             chunks.append({"正文": "\n".join(cur_lines), "块标题": cur_title})
-            tail = "".join(cur_lines)[-overlap:]   # 尾巴 50 字
+            tail = "\n".join(cur_lines)[-overlap:]   # 尾巴 50 字
             cur_lines = [tail]                     # 抄到新块开头
             cur_len = len(tail)
 
