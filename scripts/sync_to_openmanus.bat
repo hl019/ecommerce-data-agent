@@ -11,11 +11,12 @@ copy /Y "%REPO%\app\tool\sales_stats.py"      "%OM%\app\tool\sales_stats.py"    
 copy /Y "%REPO%\app\tool\plot_chart.py"       "%OM%\app\tool\plot_chart.py"       >nul
 copy /Y "%REPO%\app\tool\report_generator.py" "%OM%\app\tool\report_generator.py" >nul
 copy /Y "%REPO%\app\tool\kb_search.py"       "%OM%\app\tool\kb_search.py"       >nul
+copy /Y "%REPO%\app\tool\customer_lookalike.py" "%OM%\app\tool\customer_lookalike.py" >nul
 
 echo Sync done:
 echo   app\agent\ecommerce.py   -^> %OM%\app\agent\
 echo   app\prompt\ecommerce.py  -^> %OM%\app\prompt\
-echo   app\tool\*.py (4 tools)  -^> %OM%\app\tool\
+echo   app\tool\*.py (6 tools)  -^> %OM%\app\tool\
 echo.
 echo Next: run  python %REPO%\tests\test_tools.py
 pause

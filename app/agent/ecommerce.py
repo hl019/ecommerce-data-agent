@@ -27,7 +27,7 @@ from app.tool.sales_stats import SalesStats
 from app.tool.plot_chart import PlotChart
 from app.tool.report_generator import ReportGenerator
 from app.tool.kb_search import KBSearch
-
+from app.tool.customer_lookalike import CustomerLookalike
 
 class EcommerceAgent(ToolCallAgent):
     """电商运营数据分析智能体：一句话业务问题 → 查数 → 统计 → 图表 → HTML 报告"""
@@ -51,6 +51,7 @@ class EcommerceAgent(ToolCallAgent):
             PlotChart(),
             ReportGenerator(),
             KBSearch(),
+            CustomerLookalike(),
             Terminate(),
         )
     )
