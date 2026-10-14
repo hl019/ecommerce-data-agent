@@ -23,13 +23,16 @@ def precheck():
             "SYSTEM_PROMPT 还是空的 → 先填 D:\\projects\\ecommerce-data-agent\\app\\prompt\\ecommerce.py 并跑 sync bat")
     from app.agent.ecommerce import EcommerceAgent
     tool_names = {t.name for t in EcommerceAgent().available_tools.tools}
-    expected = {"sales_sql_query", "sales_stats", "plot_chart", "report_generator"}
+    expected = {"sales_sql_query", "sales_stats", "plot_chart", "report_generator",
+                "kb_search", "customer_lookalike"}
     missing = expected - tool_names
     if missing:
         problems.append(
             f"这些工具还没注册进 EcommerceAgent：{sorted(missing)} → 改 app\\agent\\ecommerce.py 的 available_tools 并跑 sync bat")
     if not os.environ.get("MYSQL_PASSWORD"):
         problems.append("环境变量 MYSQL_PASSWORD 未设 → 当前终端先 $env:MYSQL_PASSWORD = \"你的密码\"")
+    if not os.environ.get("ZHIPU_API_KEY"):
+        problems.append("环境变量 ZHIPU_API_KEY 未设 → kb_search/customer_lookalike 之外的路能跑，但 RAG 检索会中途报错，先 $env:ZHIPU_API_KEY = \"sk-...\"")
     return problems
 
 
