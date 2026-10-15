@@ -97,8 +97,8 @@ class SalesSQLQuery(BaseTool):
         try:
             conn = pymysql.connect(
                 host="127.0.0.1",
-                user="root",
-                password=os.environ.get("MYSQL_PASSWORD", ""),
+                user=os.environ.get("MYSQL_RO_USER", "ecom_ro"),
+                password=os.environ.get("MYSQL_RO_PASSWORD", ""),
                 database="ecommerce_agent",
                 charset="utf8mb4",
             )
