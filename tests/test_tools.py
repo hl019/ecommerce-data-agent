@@ -28,6 +28,8 @@ try:
     from app.tool.sales_stats import SalesStats
     from app.tool.plot_chart import PlotChart
     from app.tool.report_generator import ReportGenerator
+    from app.tool.customer_lookalike import CustomerLookalike
+    from app.tool.kb_search import KBSearch
 except ImportError as e:
     sys.exit(f"导入失败：{e}\n请先运行 scripts\\sync_to_openmanus.bat 把工具代码同步进 OpenManus")
 
@@ -191,6 +193,87 @@ def check_empty_sections(result):
 run("report_generator", "空 sections 被拒绝",
     lambda: t4.execute(title="t", sections=[]),
     check_empty_sections)
+
+
+# ============ Z13 修复回归固化 + W4 新工具评测（10-15 P1，ZCode）============
+W3_LIVE = bool(os.environ.get("ZHIPU_API_KEY"))
+
+# B1 断言：report_generator 非 dict 元素必须给出可行动报错（ZCode 回归时 mock 出的正式用例）
+def check_b1_type_guard(result):
+    err = error_text(result)
+    assert err and ("字典" in err or "格式" in err), f"B1 回归：非dict元素应fail+格式示例，实际: {(err or output_text(result))[:120]}"
+
+run("report_generator", "B1回归：sections元素类型校验",
+    lambda: t4.execute(title="回归t", sections=["我是字符串"]),
+    check_b1_type_guard)
+
+# B2 静态回归：agent.run 入口必须重置 LLM 双计数（防实现被回退——运行态两连问留给演示实测）
+def check_b2_source():
+    import inspect
+    from app.agent.ecommerce import EcommerceAgent
+    src = inspect.getsource(EcommerceAgent.run)
+    assert "total_input_tokens = 0" in src and "total_completion_tokens = 0" in src, \
+        "B2 回归：EcommerceAgent.run 入口缺少 LLM 计数重置"
+
+try:
+    check_b2_source()
+    RESULTS.append(("agent", "B2回归：run入口重置token计数", "PASS", ""))
+except AssertionError as e:
+    RESULTS.append(("agent", "B2回归：run入口重置token计数", "FAIL", str(e)))
+
+# customer_lookalike：纯离线（CSV+sklearn，无 key）
+t6 = CustomerLookalike()
+
+def check_lookalike_basic(result):
+    err = error_text(result)
+    assert not err, f"lookalike 应成功，实际: {err[:100]}"
+    data = json.loads(output_text(result))
+    sims = data["相似客户"]
+    assert len(sims) == 3, f"应返回3个，实际{len(sims)}"
+    ids = [c["客户ID"] for c in sims]
+    assert "C0001" not in ids, "必须剔除自己"
+    sc = [c["相似度"] for c in sims]
+    assert sc == sorted(sc, reverse=True), "相似度应降序"
+
+run("customer_lookalike", "C0001→3条无自含降序+共同商品",
+    lambda: t6.execute(customer_id="C0001"), check_lookalike_basic)
+
+def check_lookalike_badid(result):
+    err = error_text(result)
+    assert err and "C00" in err and "合法" in err, \
+        f"假ID应fail+回显合法示例，实际: {(err or output_text(result))[:100]}"
+
+run("customer_lookalike", "假ID→拒+回显合法示例",
+    lambda: t6.execute(customer_id="C9999"), check_lookalike_badid)
+
+# kb_search：需 ZHIPU_API_KEY（w3_live 门控，无 key 自动 SKIP）
+t5 = KBSearch()
+if not W3_LIVE:
+    for name in ("检索金蝶口径→命中库存状态+出处", "检索指标口径→命中重复购买率+mbalib", "top_k=0 兜底不炸"):
+        RESULTS.append(("kb_search", name, "SKIP", "w3_live：未设 ZHIPU_API_KEY"))
+else:
+    def check_kb_kingdee(result):
+        err = error_text(result)
+        assert not err, f"kb_search 应成功: {err[:100]}"
+        text = output_text(result)
+        assert "库存状态" in text and ("kingdee" in text or "jdy.com" in text), \
+            f"应命中库存状态+金蝶出处，实际: {text[:120]}"
+    run("kb_search", "检索金蝶口径→命中库存状态+出处",
+        lambda: t5.execute(query="库存商品不可销售怎么处理"), check_kb_kingdee)
+
+    def check_kb_mbalib(result):
+        text = output_text(result)
+        assert "重复购买率" in text and "mbalib" in text, \
+            f"应命中重复购买率.txt+mbalib出处，实际: {text[:120]}"
+    run("kb_search", "检索指标口径→命中重复购买率+mbalib",
+        lambda: t5.execute(query="复购率怎么算"), check_kb_mbalib)
+
+    def check_kb_topk0(result):
+        err = error_text(result)
+        assert not (err and ("n_results" in err or "ValueError" in err)), \
+            f"top_k=0 应被 max(1,..) 兜底，实际: {err[:100]}"
+    run("kb_search", "top_k=0 兜底不炸",
+        lambda: t5.execute(query="复购率", top_k=0), check_kb_topk0)
 
 # ============ 汇总 ============
 print("\n" + "=" * 62)
