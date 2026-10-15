@@ -91,7 +91,7 @@ class KBSearch(BaseTool):
         if col.count() == 0:
             return self.fail_response("知识库为空——先跑 ingest_corpus.py 入库语料")
 
-        hit = col.query(query_embeddings=[q_vec], n_results=min(top_k, col.count()))
+        hit = col.query(query_embeddings=[q_vec], n_results=max(1, min(top_k, col.count())))
         docs = hit["documents"][0]
         metas = hit["metadatas"][0]
         dists = hit["distances"][0]        # chromadb 默认 L2 距离：越小越像

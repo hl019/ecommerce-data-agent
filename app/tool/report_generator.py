@@ -116,6 +116,13 @@ class ReportGenerator(BaseTool):
             return self.fail_response(
                 "sections 不能为空——报告至少需要一个章节，形如 [{\"heading\":\"结论\",\"content\":\"...\"}]。"
             )
+        # B1 修复（Z13）：sections 元素类型校验
+        for s in sections:
+            if not isinstance(s, dict):
+                return self.fail_response(
+                    f"sections 元素必须是字典，收到 {type(s).__name__}。正确格式：[{{\"heading\":\"结论\",\"content\":\"...\"}}]"
+                )
+
         safe_title = "".join(c for c in title if c not in '\\/:*?"<>|')[:30] or "report"
 
         # 填空 2：逐个检查图表文件（缺失的跳过 + 记警告，不中断报告）
