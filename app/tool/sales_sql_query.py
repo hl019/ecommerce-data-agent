@@ -85,7 +85,11 @@ class SalesSQLQuery(BaseTool):
 
         if not upper_sql.startswith(("SELECT", "WITH", "(")):
             return self.fail_response(f"只允许 SELECT 只读查询，拒绝执行：{sql}")
-        if ";" in clean_sql:
+        # H1 修复（Z13）：分号检查先剥掉字符串字面量内的内容——
+        # 否则 SELECT ... WHERE CustomerName LIKE 'a;b' 里合法的分号会被误判为多语句
+        # （这是"宁误杀勿放过"的反面：守卫要严，但不能伤到合法查询）
+        sql_no_literals = re.sub(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", "", clean_sql)
+        if ";" in sql_no_literals:
             return self.fail_response("只允许单条查询语句，不接受分号分隔的多语句。")
         if upper_sql.startswith("WITH") and re.search(r"(^|\))\s*(UPDATE|DELETE)\b", upper_sql):
             return self.fail_response(f"CTE 后只允许接 SELECT，检测到写操作，拒绝执行：{sql}")
@@ -101,6 +105,7 @@ class SalesSQLQuery(BaseTool):
                 password=os.environ.get("MYSQL_RO_PASSWORD", ""),
                 database="ecommerce_agent",
                 charset="utf8mb4",
+                connect_timeout=5,   # H3 修复（Z13）：MySQL 挂起时避免 Agent 干等 TCP 超时
             )
 
             # 填空 3：执行并限量取数

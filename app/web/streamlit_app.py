@@ -34,7 +34,7 @@ for _k in ("answer", "result_raw", "report_path"):
     if _k not in st.session_state:
         st.session_state[_k] = ""
 
-question = st.text_input("业务问题", placeholder="例如：分析月度销售趋势并生成报告", key="q")
+question = st.text_input("业务问题", placeholder="输入你的业务问题…", key="q")
 run_clicked = st.button("生成报告", type="primary")
 
 if run_clicked and question.strip():
