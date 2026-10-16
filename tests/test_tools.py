@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-W2 工具自测脚本：每写完一个工具 → 跑一次 → 自己判断对不对，不依赖 ZCode 手把手。
+工具自动化测试套件：17 用例三档（纯本地 / 含数据库 / live 门控），坏输入用例固化历次修复。
 
 运行方式（任意 python，需已装 pandas/sqlalchemy/pymysql/plotly）：
     python D:\\projects\\ecommerce-data-agent\\tests\\test_tools.py
 
 判定规则：
     PASS = 实现正确     FAIL = 实现了但行为不对（看错误信息修）
-    SKIP = 还是 NotImplementedError 空骨架（没写呢，不算错）
+    SKIP = 工具尚未实现（NotImplementedError，不计失败）
 
 前提：
     1. 已跑过 scripts\\sync_to_openmanus.bat（把仓库 app\\ 同步进 OpenManus）
@@ -100,7 +100,7 @@ run("sales_sql_query", "只读守卫拒绝 DROP TABLE",
     lambda: t1.execute(sql="DROP TABLE Customers"),
     check_readonly_guard)
 
-# ── 守卫加强版对照用例（1007 考核官裁决②验收，需 MySQL 在跑）──
+# ── SQL 只读守卫对照用例（CTE 放行 / WITH+DELETE 拦截，需 MySQL 在跑）──
 def check_cte_pass(result):
     err = error_text(result)
     assert not err, f"合法 CTE 应被放行（守卫加强版），实际被拒: {err[:120]}"
@@ -195,10 +195,10 @@ run("report_generator", "空 sections 被拒绝",
     check_empty_sections)
 
 
-# ============ Z13 修复回归固化 + W4 新工具评测（10-15 P1，ZCode）============
+# ============ 修复回归固化 + ML/RAG 工具评测 ============
 W3_LIVE = bool(os.environ.get("ZHIPU_API_KEY"))
 
-# B1 断言：report_generator 非 dict 元素必须给出可行动报错（ZCode 回归时 mock 出的正式用例）
+# 断言：report_generator 非 dict 元素必须给出可行动报错（回归固化用例）
 def check_b1_type_guard(result):
     err = error_text(result)
     assert err and ("字典" in err or "格式" in err), f"B1 回归：非dict元素应fail+格式示例，实际: {(err or output_text(result))[:120]}"
@@ -207,7 +207,7 @@ run("report_generator", "B1回归：sections元素类型校验",
     lambda: t4.execute(title="回归t", sections=["我是字符串"]),
     check_b1_type_guard)
 
-# B2 静态回归：agent.run 入口必须重置 LLM 双计数（防实现被回退——运行态两连问留给演示实测）
+# 静态回归：agent.run 入口必须重置 LLM 双计数（防实现回退；运行态两连问另行实测）
 def check_b2_source():
     import inspect
     from app.agent.ecommerce import EcommerceAgent
@@ -290,7 +290,7 @@ n_skip = sum(1 for r in RESULTS if r[2] == "SKIP")
 print("-" * 62)
 print(f"PASS {n_pass} / FAIL {n_fail} / SKIP {n_skip}（共 {len(RESULTS)} 用例）")
 if n_skip:
-    print("提示：SKIP = 该工具还是空骨架，写完 execute() 再跑一次")
+    print("提示：SKIP = 工具尚未实现")
 if n_fail == 0 and n_skip == 0:
     print(">>> 四个工具全部就绪，可以接通 EcommerceAgent 跑端到端 MVP 了")
 sys.exit(1 if n_fail else 0)

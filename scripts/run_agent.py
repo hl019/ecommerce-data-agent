@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-MVP 端到端运行脚手架（ZCode 提供，不含学生核心代码）
+MVP 端到端运行入口（命令行提问 → Agent 全链路 → 产物指引）
 
 用法（工具 4 + 工具注册 + 提示词三件事完成后）：
     D:\\projects\\OpenManus\\.venv\\Scripts\\python.exe D:\\projects\\ecommerce-data-agent\\scripts\\run_agent.py "分析月度销售趋势并生成报告"
 
-前置检查会替你把关：提示词没填、工具没注册，脚本会直接指出缺哪一步，不会白跑。
+启动前自动检查环境完备性（工具注册 / 提示词 / 账号环境变量），缺失即报错并给修复指引。
 """
 import asyncio
 import os
