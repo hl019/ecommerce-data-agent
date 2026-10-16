@@ -140,16 +140,36 @@ class ReportGenerator(BaseTool):
         for s in sections:
             sections_html += f"<h2>{escape(s.get('heading', ''))}</h2>\n<p>{escape(s.get('content', ''))}</p>\n"
 
+        # ── I2：图表内联进报告（单文件自包含，报告可独立发送）──
+        # 原实现用 iframe 引用 ../charts/xxx.html：相对路径依赖本机目录，
+        # 报告一旦发给别人（或移到别处）图表就裂。
+        # 现改为：把图表文件 body 内的内容（空容器 div + Plotly.newPlot 脚本）
+        # 整段嵌入报告，并在 <head> 里只引一次 plotly CDN。
+        import re as _re
         charts_html = ""
+        plotly_script = ""
+        _CDN_RE = r'<script[^>]*src="https://cdn\.plot\.ly/[^"]*"[^>]*>\s*</script>'
         for p in valid_charts:
-            # 关键：iframe 的 src 由浏览器按「报告文件所在目录」解析，
-            # 而 p 是相对「进程工作目录(CWD)」的路径。两者基准不同，
-            # 直接写 p 会被解析成 workspace/reports/workspace/charts/... → 裂图。
-            # 所以必须换算成「相对报告目录」的路径（../charts/xxx.html）。
-            rel = os.path.relpath(p, self.REPORTS_DIR).replace("\\", "/")
-            charts_html += f'<iframe src="{rel}" width="100%" height="430" style="border:none"></iframe>\n'
+            try:
+                with open(p, encoding="utf-8") as _f:
+                    _src = _f.read()
+            except Exception as e:
+                charts_html += (
+                    f'<p style="color:#c00">⚠ 图表读取失败（{e}），已跳过：{os.path.basename(p)}</p>\n'
+                )
+                continue
+            # 从首个图表里提取 plotly CDN 标签（版本与图表生成时一致）
+            if not plotly_script:
+                _m0 = _re.search(_CDN_RE, _src)
+                if _m0:
+                    plotly_script = _m0.group(0)
+            # 取 body 内容并剔除其中的 CDN 标签（避免重复引入）
+            _m = _re.search(r'<body[^>]*>(.*?)</body>', _src, _re.S)
+            _content = _m.group(1) if _m else _src
+            _content = _re.sub(_CDN_RE, '', _content)
+            charts_html += _content.strip() + "\n"
         for p in missing_charts:
-            charts_html += f'<p style="color:#c00">⚠ 图表未找到，已跳过：{p}</p>\n'
+            charts_html += f'<p style="color:#c00">⚠ 图表未找到，已跳过：{os.path.basename(p)}</p>\n'
 
         # 填空 4：token 消耗统计（读 LLM 单例的累计计数）
         from app.llm import LLM
@@ -164,7 +184,8 @@ class ReportGenerator(BaseTool):
         # 填空 5：拼完整 HTML 并落盘
         report_html = f"""<!DOCTYPE html>
 <html lang="zh">
-<head><meta charset="utf-8"><title>{safe_title}</title></head>
+<head><meta charset="utf-8"><title>{safe_title}</title>
+{plotly_script}</head>
 <body style="font-family:sans-serif;max-width:900px;margin:40px auto">
 <h1>{safe_title}</h1>
 {sections_html}
