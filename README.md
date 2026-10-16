@@ -1,43 +1,153 @@
-# ecommerce-data-agent · 电商运营数据智能体
+# 电商运营数据分析智能体
 
-> 一句业务问题（如"分析 7 月销售下滑原因"）→ Agent 自动任务分解 → SQL/Pandas 分析 → Plotly 图表 → HTML 运营报告。
-> 基于 [OpenManus](https://github.com/FoundationAgents/OpenManus)（MIT 协议）二次开发，学习笔记参考 [ai-agent-interview-guide](https://github.com/bcefghj/ai-agent-interview-guide)。
+> 输入一句中文业务问题 → Agent 自动查数 / 统计 / 画图 → 输出带图表与出处的 HTML 分析报告。
+>
+> **6 个自研工具 ｜ RAG 知识库（9 篇文档 / 82 个语义块 / 平均 294 字）｜ 单次端到端 ≈ ¥0.05**
 
-## 项目状态：W3 RAG 已闭环，W4 进行中（更新于 2026-10-12）
+<!-- 📺 30 秒演示视频/GIF 放这里（Streamlit 右上菜单 → Record screen 录制，待补） -->
 
-> 最新里程碑：2026-10-12 RAG 知识检索闭环——9 篇真实公开文档 / 82 个知识块，Agent 回答口径类问题**带出处引用**，无关问题**如实拒答**（防幻觉实测）；Streamlit 网页 UI 跑通（一句话→回答+报告链接）。
+## 它解决什么问题
 
-| 周 | 里程碑 | 状态 |
-|---|---|---|
-| W1 | 环境搭建、首跑 ReAct 循环、核心源码精读、MySQL 数据环境、JD 调研 | ✅ 已完成（2026-09-25） |
-| W2 | 自有工具层 4 件 + EcommerceAgent + 场景化提示词；MVP「一句话→自动出报告」 | ✅ 已完成（2026-10-06） |
-| W3 | RAG 知识库（ingest 幂等入库 82 块 + kb_search 带出处检索 + 引用来源 + 防幻觉实测） | ✅ 已完成（2026-10-12） |
-| W4 | Streamlit UI ✅ / README+架构图+演示视频 🚧 / customer_lookalike ML 工具 ⬜ |  进行中 |
-| W5+ | 简历三版润色 + 模拟面试 + 投递 | ⬜ |
+电商运营做日常复盘时，取数靠手工导表、跨表核对、口径靠问人——**一个"上月哪个品类卖得好"要花半小时**。
 
-## Roadmap · 二次开发深度验收清单
+本项目把这条链路压缩成**一句话**：运营人员不需要会 SQL，输入自然语言问题，即可获得带图表、带结论、**带数据来源引用**的分析报告。业务口径类问题（如"复购率怎么算"）由 RAG 知识库作答，**回答必附出处；无依据时如实说明，不编造**。
 
-- [ ] ≥ 4 个自有工具（function schema 与核心逻辑独立编写）
-- [ ] 自建真实 RAG 知识库（全部文档来源可查，不使用 AI 生成内容充数）
-- [ ] 针对电商分析场景重写系统提示词（`app/prompt/`）
-- [ ] 架构图明确标注自有模块与 OpenManus 原生模块的边界
+## 架构
 
-## 技术要点
+```mermaid
+flowchart TB
+    UI["👤 运营人员浏览器<br/>Streamlit UI · app/web/streamlit_app.py"]
 
-ReAct 循环 · Function Calling · 只读 SQL 守卫 · Pandas 聚合分析 · Plotly 可视化 · HTML 报告生成 · RAG（分块/向量检索）· 会话记忆 · MCP 工具协议 · Docker 部署
+    subgraph OWN["🟦 自研层（本项目产出）"]
+        AG["EcommerceAgent<br/>app/agent/ecommerce.py"]
+        PR["场景化提示词·工具路由<br/>app/prompt/ecommerce.py"]
+        T1["sales_sql_query<br/>只读守卫+限量+markdown"]
+        T2["sales_stats<br/>枚举五类pandas统计"]
+        T3["plot_chart<br/>Plotly→HTML·CDN引用"]
+        T4["report_generator<br/>HTML报告+token成本页脚"]
+        T5["kb_search<br/>语义检索+出处回显+拒答授权"]
+        T6["customer_lookalike<br/>PCA(0.95自适应)+cosine KNN"]
+        IN["ingest_corpus<br/>切块→向量化→幂等入库"]
+    end
+
+    subgraph BASE["⬜ OpenManus 底座（MIT，原样复用）"]
+        LOOP["ReAct 循环 think/act"]
+        MEM["Memory 滑窗"]
+        TERM["Terminate 与安全兜底"]
+    end
+
+    LLM["☁ DeepSeek Chat（对话模型）"]
+    ZP["☁ 智谱 embedding-3（向量模型）"]
+    DB[("MySQL ecommerce_agent<br/>3表 200/100/1000")]
+    CSV[("CSV 同源快照")]
+    KB[("chromadb 持久库<br/>9篇/82块")]
+    DOC["📄 真实公开文档<br/>金蝶5+指标3+干扰1"]
+
+    UI -->|"asyncio.run(agent.run)"| AG
+    PR --> AG
+    AG --- LOOP
+    LOOP --- MEM
+    LOOP --- TERM
+    AG -->|"Function Calling"| T1 & T2 & T3 & T4 & T5 & T6
+    T1 --> DB
+    T2 --> CSV
+    T6 --> CSV
+    T5 --> KB
+    DOC -->|"采集+bs4清洗"| IN
+    IN -->|"全量扫描 upsert 幂等"| KB
+    AG <--> LLM
+    T5 <--> ZP
+    IN <--> ZP
+```
+
+## 核心能力
+
+- **6 个自研工具接入 Agent**：只读 SQL 查询（**三层安全防御**）、pandas 统计分析、Plotly 交互图表、HTML 报告生成（含 token 成本页脚）、RAG 知识库检索、相似客户分析（PCA + KNN），全部由大模型自主调度（Function Calling）
+- **RAG 知识库**：9 篇真实公开文档 → 82 个语义块（**幂等入库**，重跑结果一致）；回答带来源引用；**无关问题实测正确拒答**
+- **检索调优**：定位切块过碎问题（平均 **40 → 294 字**）；发现向量检索分数无区分度（相关 0.842 / 不相关 0.797）后，将相关性判断交由大模型结合上下文处理
+- **可观测与评测**：**17 条自动化测试用例**（12 条纯本地 / 2 条含数据库 / 3 条含真实 API）；每步执行日志可追溯；token 成本统计
+- **Web 界面**：Streamlit 一句话输入 → 回答 + 报告链接 + 执行过程展开
+
+## 快速开始
+
+> 以下命令以 **PowerShell**（Windows）为例。
+
+```powershell
+# 1. 依赖（★ OpenManus 基座是 uv 管理的 venv，它没有 pip）
+uv pip install pymysql pandas plotly chromadb requests streamlit scikit-learn beautifulsoup4 lxml --python <你的 OpenManus venv 路径>\Scripts\python.exe
+
+# 2. 初始化数据库（用 root 账号建表与灌数据）
+$env:MYSQL_PASSWORD="<root 密码>"
+python scripts/w2_setup/one_click_init.py
+
+# 3a. 命令行运行（查询走只读账号）
+$env:MYSQL_RO_PASSWORD="<只读账号密码>"; $env:ZHIPU_API_KEY="sk-..."
+python scripts/run_agent.py
+
+# 3b. Web 界面（★ 必须在同一终端窗口先设环境变量）
+$env:MYSQL_RO_PASSWORD="<只读账号密码>"; $env:ZHIPU_API_KEY="sk-..."
+python -m streamlit run app/web/streamlit_app.py
+```
+
+> ⚠️ **环境变量不跨窗口**：Streamlit 必须在**同一个终端窗口**里设好环境变量后再启动，否则会报密钥缺失。
+
+> 🔐 **账号分工**：`MYSQL_PASSWORD`（root）仅用于**初始化建表**；`MYSQL_RO_USER` / `MYSQL_RO_PASSWORD`（只读账号，仅 `GRANT SELECT`）用于**所有查询**——数据库层兜底防御。
+
+## 技术要点与踩坑精选
+
+1. **切块参数"写了 ≠ 生效"**：首版切块平均仅 40 字——`max_len=500` 一次都没触发（标题太密）。改为"内容攒够 200 字再切"后升至 294 字，命中内容从"只有标题"变为完整段落。
+2. **向量检索分数无区分度**：完全不相关的文档也能拿 0.797（正确答案 0.842，仅差 0.045）→ 结论：**向量检索是"排序器"不是"打分器"**，绝对分数不可靠、排序可靠；改为"分数交给模型 + 提示词授权其说'不知道'"。
+3. **token 统计曾是全局累计**：LLM 是进程级单例、计数从不重置，连问第二个问题时报告页脚会变成两次之和 → **在 Agent 入口把计数清零**，每轮任务从零开始计。
+
+## 自有模块标注（本项目产出 vs 开源底座）
+
+**本仓库自研**：
+
+| 模块 | 说明 |
+|---|---|
+| `app/tool/sales_sql_query.py` | 只读 SQL 查询 + 三层安全防御（提示词约束 / 代码守卫 / 数据库只读账号） |
+| `app/tool/sales_stats.py` | 5 类预设统计（月度 / 品类 / 用户 / Top商品 / 复购率） |
+| `app/tool/plot_chart.py` | 5 种 Plotly 交互图表，列名校验 + 路径返回 |
+| `app/tool/report_generator.py` | HTML 报告生成（图表嵌入 + token 成本页脚 + 缺失图表降级） |
+| `app/tool/kb_search.py` | RAG 语义检索（出处回显 + 相关性判断授权） |
+| `app/tool/customer_lookalike.py` | 相似客户分析（特征矩阵 → 标准化 → PCA → cosine KNN） |
+| `scripts/w3_setup/ingest_corpus.py` | 语料切块 → 向量化 → 幂等入库 |
+| `app/agent/ecommerce.py` · `app/prompt/ecommerce.py` | Agent 装配（工具注册 / 每轮 token 计数清零）+ 场景化提示词 |
+| `app/web/streamlit_app.py` | Web 界面 |
+| `tests/` | 17 条自动化测试用例 |
+
+**OpenManus 底座（MIT 协议，原样复用）**：ReAct 循环（`think` / `act`）、工具基类与注册机制、LLM 封装与单例计数、消息与记忆机制、卡死检测与 `max_steps`。
+
+## 生产化设计说明（未实施，仅为设计）
+
+若要把本项目容器化上线，我会这样切分：
+
+1. **镜像分层**：`python:slim` 基础层 → 依赖层 → 应用层，依赖层可缓存复用；
+2. **数据与密钥**：`knowledge/`（向量库持久目录）与 `workspace/`（图表与报告产物）挂 volume，避免容器重建丢数据；密钥经环境变量注入，**不烧进镜像**；
+3. **服务编排**：`docker-compose` 起两个服务——`mysql`（含初始化脚本挂载）与 `agent`（Streamlit 界面；**API 服务化评估后暂不采用**——本项目定位是单用户演示应用，Web 框架的并发与鉴权能力用不上）；
+4. **健康检查**：容器 healthcheck 探测 Web 端口与 MySQL 连通性；
+5. **多阶段构建**：构建期装依赖、运行期只保留运行时依赖，压缩镜像体积。
+
+## 数据说明
+
+- **数据源**：MySQL `ecommerce_agent`（3 表：Customers 200 / Products 100 / Transactions 1000）+ 同源 CSV 快照（统计与 ML 工具不依赖数据库，便于离线运行）
+- **三消费者两数据源**：SQL 工具读 MySQL，统计与 ML 工具读 CSV——**改一处数据必须重跑 `one_click_init.py` 全量刷新**（该脚本幂等）
+- **知识库语料**：9 篇真实公开文档（金蝶官方帮助文档 5 篇 + 商业百科词条 3 篇 + 干扰项对照 1 篇），**全部人工采集，无 AI 生成内容**
+- **运行产物**：`workspace/charts/` 与 `workspace/reports/` 为运行产物（带时间戳，不入库、可整体清空重跑）
+
+## 二次开发深度验收清单
+
+- [x] 自研工具 ≥ 4 个（实际 6 个）
+- [x] 自建知识库（9 篇真实文档，非 AI 生成）
+- [x] 场景化提示词（角色定位 / 工具分流 / 输出约束）
+- [x] README 标注自有模块
+- [x] 自动化测试用例（17 条）
+- [x] 三层安全防御（含实测证据：只读账号 `DROP` 被拒）
 
 ## 文档
 
 - [学习笔记索引](docs/learning/) —— 环境搭建、源码带读、工具设计、踩坑故事
 
-## 数据说明
-
-演示数据集为 1000 笔交易合成样本（CSV 与初始化脚本见 `scripts/w2_setup/`）。`sales_sql_query` 读 MySQL、`sales_stats` 读 CSV，两工具在 demo 阶段为**同源快照**（均由 `one_click_init.py` 从同一份 CSV 幂等重建，跑一次即同步）；生产化会收敛为单库单源。
-
-## 运行产物说明
-
-`workspace/charts/` 与 `workspace/reports/` 为 Agent 运行产物：每执行一次任务生成一套带时间戳的图表/报告文件（时间戳防互相覆盖），**不入库、可随时整体清空重跑**，不影响项目功能。clone 后按 `scripts/w2_setup/README.md` 初始化数据、填 `config/config.toml`，用 `python scripts/run_agent.py "你的业务问题"` 即可重新生成全套演示产物。
-
 ## 致谢与许可
 
-核心框架来自 OpenManus（MIT），感谢原作者团队。本项目遵循 MIT 协议开源。
+基于 [OpenManus](https://github.com/FoundationAgents/OpenManus)（MIT 协议）二次开发。本项目代码以 MIT 协议开源。
