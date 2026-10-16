@@ -1,0 +1,17 @@
+# ecommerce-data-agent 项目直接依赖（ZCode · Z18）
+# 版本 = 2026-10-16 OpenManus venv 实装值（uv pip freeze 生成，本机全链路实测）
+# 说明：OpenManus 底座自身的完整依赖以该仓库 pyproject 为准；此处只列"六个工具+ingest+UI+测试"所需。
+# 安装（★ 该 venv 由 uv 创建、无 pip）：
+#   uv pip install -r requirements.txt --python <OpenManus venv>\Scripts\python.exe
+
+openai==1.66.5            # 底座 LLM 调用层（DeepSeek 走其兼容协议）
+pymysql==1.2.3            # sales_sql_query
+pandas==3.0.5             # sales_stats / customer_lookalike / ingest
+numpy==2.5.3              # 特征矩阵底层
+plotly==7.1.0             # plot_chart（write_html include_plotlyjs="cdn" 为 7.x 行为）
+chromadb==1.5.9           # kb_search / ingest 持久库
+requests==2.32.5          # 智谱 embedding HTTP 调用（★ venv 内勿装孤儿 chardet，会触发版本告警）
+scikit-learn==1.9.1       # customer_lookalike（PCA / StandardScaler / NearestNeighbors）
+beautifulsoup4==4.13.5    # 语料采集清洗
+lxml==5.4.0               # bs4 解析器
+streamlit==1.65.0         # Web UI
