@@ -74,7 +74,7 @@ flowchart TB
 
 ```powershell
 # 1. 依赖（★ OpenManus 基座是 uv 管理的 venv，它没有 pip）
-uv pip install pymysql pandas plotly chromadb requests streamlit scikit-learn beautifulsoup4 lxml --python <你的 OpenManus venv 路径>\Scripts\python.exe
+uv pip install -r requirements.txt --python <你的 OpenManus venv 路径>\Scripts\python.exe
 
 # 2. 初始化数据库（用 root 账号建表与灌数据）
 $env:MYSQL_PASSWORD="<root 密码>"

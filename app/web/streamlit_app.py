@@ -11,7 +11,6 @@ import asyncio
 import glob
 import os
 import sys
-import time
 
 sys.path.insert(0, r"D:\projects\OpenManus")
 os.chdir(r"D:\projects\OpenManus")
@@ -40,10 +39,10 @@ run_clicked = st.button("生成报告", type="primary")
 if run_clicked and question.strip():
     from app.agent.ecommerce import EcommerceAgent
 
-    # ── I1 修复：记录任务开始时间 ──
-    # 只认"本次任务生成"的报告。否则问口径类问题时（本就不出报告），
-    # 页面会误显示文件夹里遗留的旧报告，误导使用者。
-    task_start = time.time()
+    # ── I1（差集法 · ZCode 建议升级）：不依赖时钟 ──
+    # 原方案用 task_start = time.time() 过滤 mtime，秒级精度/同秒完成有边角。
+    # 改为：跑之前记下已有报告集合，跑完取差集 = 本次新生成的。
+    before = set(glob.glob(os.path.join(REPORTS_DIR, "*.html")))
 
     agent = EcommerceAgent()
     with st.spinner("Agent 正在查数、画图、写报告……（约 1-2 分钟）"):
@@ -60,10 +59,9 @@ if run_clicked and question.strip():
     except Exception:
         pass
 
-    # I1：只取本次任务生成的报告（文件修改时间晚于任务开始）
-    all_reports = glob.glob(os.path.join(REPORTS_DIR, "*.html"))
-    fresh = [p for p in all_reports if os.path.getmtime(p) > task_start]
-    latest = max(fresh, key=os.path.getmtime) if fresh else ""
+    # I1：差集 = 本次新生成的报告（口径类问题本就不出报告 → 差集为空 → UI 如实说明）
+    new_reports = [p for p in glob.glob(os.path.join(REPORTS_DIR, "*.html")) if p not in before]
+    latest = max(new_reports, key=os.path.getmtime) if new_reports else ""
 
     st.session_state.answer = answer or result
     st.session_state.result_raw = result
@@ -83,9 +81,8 @@ if st.session_state.answer:
         # 原来的 file:// 链接会被 Chrome 从 http 页面拦截（跨协议导航），
         # 下载按钮绕开这个限制。
         try:
-            with open(latest, encoding="utf-8") as f:
-                html = f.read()
-            st.download_button("⬇️ 下载报告（HTML）", html, file_name=name, mime="text/html")
+            with open(latest, "rb") as f:   # bytes 模式（ZCode 建议）：避免编码边角
+                st.download_button("⬇️ 下载报告（HTML）", f.read(), file_name=name, mime="text/html")
         except Exception as e:
             st.caption(f"（报告读取失败：{e}）")
 
