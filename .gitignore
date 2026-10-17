@@ -22,3 +22,6 @@ Thumbs.db
 # IDE
 .idea/
 *.iml
+
+# 教学笔记仅本地留存（review\learning-notes），不进公开仓库（规范 #8 / 案A 10-17）
+docs/learning/

@@ -145,10 +145,6 @@ python -m streamlit run app/web/streamlit_app.py
 - [x] 自动化测试用例（17 条）
 - [x] 三层安全防御（含实测证据：只读账号 `DROP` 被拒）
 
-## 文档
-
-- [学习笔记索引](docs/learning/) —— 环境搭建、源码带读、工具设计、踩坑故事
-
 ## 致谢与许可
 
 基于 [OpenManus](https://github.com/FoundationAgents/OpenManus)（MIT 协议）二次开发。本项目代码以 MIT 协议开源。
