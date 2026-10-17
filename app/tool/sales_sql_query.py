@@ -1,13 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-工具 1：sales_sql_query —— 对电商数据库执行只读 SQL 查询（填空式骨架）
 
-预习包：《ZCode-W2工具1预习包.md》（review\）——每个空该填什么、引导问题、PASS 标准都在那里。
-带写模式：考核官逐行带写，本文件是预习材料；写完跑 sync bat + tests/test_tools.py。
-
-红线（考核官）：description / parameters / execute / 错误处理全部学生亲手写。
-本骨架只给：类定义 + 空的填空位 + 引导问题。不许抄预习包里的"答案方向"原文当交付——
-带写时你要能对着考核官讲出每一行为什么这么写。
 """
 import os
 import re
@@ -15,30 +8,18 @@ import re
 import pymysql
 from app.tool.base import BaseTool, ToolResult
 
-
 class SalesSQLQuery(BaseTool):
     """只读 SQL 查询工具（W2 工具 1）"""
 
     name: str = "sales_sql_query"
 
-    # ── 填空 A：description ─────────────────────────────
-    # 引导问题（答出来再写）：
-    #   A1. 这个工具"能做什么"一句话怎么说？（模型靠这句话决定要不要调它）
-    #   A2. "什么时候该调它、什么时候不该"要不要写进去？（对比：问题要画图时该调谁？）
-    #   A3. 返回格式（markdown 表格）要不要告诉模型？为什么？
+    #description ─────────────────────────────
     description: str =  ("对电商销售数据库执行只读的 SQL 查询（SELECT），返回 markdown 格式的表格结果。"
         "当你需要查询具体的销售数据、客户信息或交易明细时调用本工具，例如某月的销售额、"
         "客户数量、订单明细等。注意：本工具只支持 SELECT 只读查询，不能修改任何数据；"
         "当需要把查询结果画成图表时，请改用 plot_chart 工具。")
 
-    # ── 填空 B：parameters（JSON Schema，四步填）──────────
-    # 步骤 B1：外层骨架 {"type": "object", "properties": { … }, "required": [ … ]}
-    # 步骤 B2：properties 里加 "sql"：type 是什么？description 写什么
-    #         （提示：description 是给模型看的说明书，写"要执行的 SELECT 语句"够不够？
-    #           想想模型可能传 INSERT 进来，你要不要在说明书里先劝它一句）
-    # 步骤 B3：加 "row_limit"：type 是什么？要不要给默认值语义的说明？
-    # 步骤 B4：required 数组里放谁？为什么 row_limit 不放？
-    # 格式蓝本：lab 01 实验 2 的 tools 定义 / app/tool/ask_human.py
+    #parameters（JSON Schema，四步填）──────────
     parameters: dict =  {
         "type": "object",
         "properties": {
@@ -56,30 +37,25 @@ class SalesSQLQuery(BaseTool):
 
     async def execute(self, sql: str, row_limit: int = 50) -> ToolResult:
         """
-        ── 填空 1：只读守卫 ──
+        #只读守卫 ──
         判断 sql 是不是 SELECT 开头（提示：strip + upper/lower + startswith）。
         不是 → return self.fail_response(一句可读的拒绝理由)。
-        引导问题：为什么必须在代码层守卫，而不是在 description 里"求"模型别传 INSERT？
 
-        ── 填空 2：建立连接 ──
+        #建立连接 ──
         pymysql.connect(host=?, user=?, password=?, database="ecommerce_agent", charset="utf8mb4")
-        引导问题：password 从哪来？（环境变量/本地配置——为什么硬编码进 .py 是事故而不是偷懒？）
 
-        ── 填空 3：执行并限量取数 ──
+        #执行并限量取数 ──
         cursor.execute(sql)；然后取 row_limit 行（提示：fetch 家族里哪个带限量参数？）。
-        引导问题：fetchall 和它在这里的差别，对 Agent 的上下文窗口意味着什么？
 
-        ── 填空 4：拼 markdown 表格 ──
+        #拼 markdown 表格 ──
         列名从 cursor.description 拿；表头一行 + 分隔一行 + 数据每行一行。
-        引导问题：模型读 markdown 表格和读 JSON，哪个省 token？省在哪？
 
-        ── 填空 5：收尾 ──
+        #收尾 ──
         成功 → self.success_response(表格字符串)；
         任何异常 → except 里 self.fail_response(可读错误)；finally 里关连接。
-        引导问题：fail_response 的错误信息最终会到哪里去？（回忆 toolcall.py execute_tool 的兜底路径）
         """
 
-        # 填空 1：只读守卫（加强版）——剥注释 / 白名单开头 / 禁分号 / 防 CTE 绕过 / 防写文件
+        #只读守卫（加强版）——剥注释 / 白名单开头 / 禁分号 / 防 CTE 绕过 / 防写文件
         clean_sql = re.sub(r"^\s*(--[^\n]*\n|/\*.*?\*/)+", "", sql, flags=re.S).strip()
         upper_sql = clean_sql.upper()
 
@@ -96,7 +72,7 @@ class SalesSQLQuery(BaseTool):
         if re.search(r"\bINTO\s+(OUTFILE|DUMPFILE)\b", upper_sql):
             return self.fail_response(f"禁止 SELECT ... INTO OUTFILE，拒绝执行：{sql}")
 
-        # 填空 2：建立连接（conn 先设为 None，finally 里要用）
+        #建立连接（conn 先设为 None，finally 里要用）
         conn = None
         try:
             conn = pymysql.connect(
@@ -108,13 +84,13 @@ class SalesSQLQuery(BaseTool):
                 connect_timeout=5,   # H3 修复（Z13）：MySQL 挂起时避免 Agent 干等 TCP 超时
             )
 
-            # 填空 3：执行并限量取数
+            #执行并限量取数
             with conn.cursor() as cursor:
                 cursor.execute(clean_sql)
                 rows = cursor.fetchmany(row_limit)
                 columns = [d[0] for d in cursor.description] if cursor.description else []
 
-            # 填空 4：拼 markdown 表格
+            #拼 markdown 表格
             if not columns:
                 return self.success_response("查询完成，但没有返回列（可能不是 SELECT）")
             header = "| " + " | ".join(columns) + " |"
@@ -128,11 +104,10 @@ class SalesSQLQuery(BaseTool):
             if len(rows) == row_limit:
                 table += f"\n\n> 注意：结果已按 row_limit={row_limit} 截断，可能还有更多数据未显示。"
 
-            # 填空 5：成功收尾
+            #成功收尾
             return self.success_response(table)
         except Exception as e:
             return self.fail_response(f"查询失败：{e}")
         finally:
             if conn:
                 conn.close()
-

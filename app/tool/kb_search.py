@@ -2,9 +2,7 @@
 """
 检索工具 kb_search —— 电商知识库语义检索（W3 主工具）
 
-★ 改这个（仓库正身）：
     D:\\projects\\ecommerce-data-agent\\app\\tool\\kb_search.py
-★ 不用改（OpenManus 运行副本，跑 sync_to_openmanus.bat 自动同步）：
     D:\\projects\\OpenManus\\app\\tool\\kb_search.py
 """
 import os
@@ -19,13 +17,7 @@ COLLECTION = "ecom_kb"
 EMBED_MODEL = "embedding-3"                   # 必须与 ingest 时一致（向量与模型绑定！）
 ZHIPU_KEY = os.environ.get("ZHIPU_API_KEY", "")
 
-# ★ 置信阈值（1010 实测后调整）：
-#   实测发现——向量检索的绝对分数**天然挤在 0.77-0.89 窄带里**（同维归一化 + 中文短文本特征稀疏），
-#   连"完全无关"的咖啡文都能拿 0.79。所以【硬阈值 0.35 毫无作用】。
-#   结论：向量检索是"排序器"不是"打分器"——**绝对分数不可靠，排序才可靠**。
-#   对策（工业界主流）：改为 **低阈值兜底 + 把分数亮给模型 + 提示词要求"不相关就说不确定"**。
 MIN_SCORE = 0.0        # 不硬卡（保留字段便于以后按需启用）；相关性判断下放给 LLM
-
 
 class KBSearch(BaseTool):
     """电商知识库检索工具（W3）"""
@@ -73,13 +65,13 @@ class KBSearch(BaseTool):
         return r.json()["data"][0]["embedding"]
 
     async def execute(self, query: str, top_k: int = 3) -> ToolResult:
-        # ── 填空 1：query 向量化 ──
+        #query 向量化 ──
         try:
             q_vec = self._embed(query)
         except Exception as e:
             return self.fail_response(f"问题向量化失败：{e}（检查 ZHIPU_API_KEY 与环境变量是否设置）")
 
-        # ── 填空 2：连接 chromadb 并检索 ──
+        #连接 chromadb 并检索 ──
         try:
             client = chromadb.PersistentClient(path=KB_DIR)
             col = client.get_collection(COLLECTION)
@@ -96,7 +88,7 @@ class KBSearch(BaseTool):
         metas = hit["metadatas"][0]
         dists = hit["distances"][0]        # chromadb 默认 L2 距离：越小越像
 
-        # ── 填空 4：阈值过滤（先做，再拼装）──
+        #阈值过滤（先做，再拼装）──
         # chromadb 默认距离是 L2（越小越像），换算成 0~1 相似度：score = 1 / (1 + dist)
         picked = []
         for doc, meta, dist in zip(docs, metas, dists):
@@ -104,11 +96,11 @@ class KBSearch(BaseTool):
             if score >= MIN_SCORE:
                 picked.append((score, doc, meta))
 
-        # ── 填空 4-兜底：全被过滤掉了 ──
+        #全被过滤掉了 ──
         if not picked:
             return ToolResult(output="知识库中未找到与问题相关的内容（相关度均低于阈值）。请换一种问法，或确认问的是业务口径/操作类问题。")
 
-        # ── 填空 3+4：结果拼装（引用来源 + 相关度分数）──
+        #+4：结果拼装（引用来源 + 相关度分数）──
         lines = [f"知识库检索到 {len(picked)} 条资料（已按相关度降序；分数仅供排序参考，绝对值不可靠）：\n"]
         for i, (score, doc, meta) in enumerate(picked, 1):
             title = meta.get("title", "未知")

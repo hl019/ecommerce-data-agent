@@ -2,7 +2,6 @@
 """
 语料入库脚本 ingest_corpus —— 切块→向量化→存库（跑一次，改了语料再跑）
 
-★ 仓库正身（改这个）：
     D:\\projects\\ecommerce-data-agent\\scripts\\w3_setup\\ingest_corpus.py
 （此脚本在仓库里直接跑，不需要 sync 进 OpenManus——它不 import app 包）
 
@@ -10,12 +9,10 @@
     D:\\projects\\OpenManus\\.venv\\Scripts\\python.exe D:\\projects\\ecommerce-data-agent\\scripts\\w3_setup\\ingest_corpus.py
 先 $env:ZHIPU_API_KEY = "sk-..."（key 只走环境变量）
 
-★ 重跑方式（考核官§六确认口径）：本脚本设计为【全量扫描 → 幂等重建】——
   语料目录以后加新文件（如 ecom-metrics 三篇），**重跑一次即可**，不产生重复块/脏数据
   （幂等靠什么实现，见 main 第 4 步提示；跑两次然后数块数，自己验证）。
 扫描范围 = RAW_DIR 下所有子目录递归：kingdee\\(5篇) + ecom-sop\\(干扰项) + ecom-metrics\\(闭环后新增3篇)
 
-红线同工具：核心逻辑学生亲手写。骨架只给步骤骨架 + 线索。
 """
 import os
 import re
@@ -31,7 +28,6 @@ COLLECTION = "ecom_kb"
 EMBED_MODEL = "embedding-3"                     # 换这行任何值 = 必须重建整个库（向量与模型绑定！）
 ZHIPU_KEY = os.environ.get("ZHIPU_API_KEY", "")  # key 只从环境变量来，绝不写进文件
 
-
 # ══════════════ 切块 ══════════════
 
 def is_heading(line, max_len=20):
@@ -43,7 +39,6 @@ def is_heading(line, max_len=20):
     if line[-1] in "，。；：、！？,.;:!?":
         return False
     return True
-
 
 def chunk_document(text, min_len=200, max_len=600, overlap=50):
     """
@@ -102,7 +97,6 @@ def chunk_document(text, min_len=200, max_len=600, overlap=50):
 
     return chunks
 
-
 # ══════════════ 智谱 embedding ══════════════
 
 def zhipu_embed(texts, retries=3):
@@ -135,7 +129,6 @@ def zhipu_embed(texts, retries=3):
         break
     raise RuntimeError(last_err)
 
-
 # ══════════════ 解析文件头 ══════════════
 
 def parse_header(text):
@@ -153,7 +146,6 @@ def parse_header(text):
             meta[m.group(1)] = m.group(2).strip()
     body = "\n".join(lines[body_start:])
     return meta, body
-
 
 # ══════════════ 主流程 ══════════════
 
@@ -236,7 +228,6 @@ def main():
     print(f"库内实存：{col.count()} 块（应与块总数一致）")
     print(f"持久化目录：{KB_DIR}")
     print("=================================")
-
 
 if __name__ == "__main__":
     main()
