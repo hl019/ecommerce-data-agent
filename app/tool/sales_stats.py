@@ -65,7 +65,7 @@ def _analyze_repurchase(transactions):
     ]
 
 class SalesStats(BaseTool):
-    """pandas 统计工具（W2 工具 2）"""
+    """pandas 统计工具"""
 
     name: str = "sales_stats"
 
@@ -108,7 +108,7 @@ class SalesStats(BaseTool):
 
         #五个分析函数 ──
         monthly / category / user / top_products / repurchase 各一个独立函数，
-        逻辑拆自 extracted_code.py 74-181（你写过的，别重写轮子）。
+        五类聚合：monthly / category / user / top_products / repurchase。
 
         #分发 + 非法枚举兜底 ──
         认识的值路由到对应函数；不认识的 → return self.fail_response(...)，

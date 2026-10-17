@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 
-（含 PASS 标准、嵌图体积账、token 统计线索、写完后的 MVP 接通四步）
+报告生成工具：汇总结论与图表，产出可独立转发的单文件 HTML 报告。
 
     D:\\projects\\ecommerce-data-agent\\app\\tool\\report_generator.py
     D:\\projects\\OpenManus\\app\\tool\\report_generator.py
@@ -15,7 +15,7 @@ from html import escape
 from app.tool.base import BaseTool, ToolResult
 
 class ReportGenerator(BaseTool):
-    """HTML 报告生成工具（W2 工具 4）"""
+    """HTML 报告生成工具"""
 
     name: str = "report_generator"
 
@@ -28,11 +28,8 @@ class ReportGenerator(BaseTool):
         "chart_paths 可选：把 plot_chart 生成的图表 HTML 路径传进来，报告会嵌入这些图表。"
     )
 
-    #parameters（W2 最有含金量的练手点：array/object 嵌套 schema）──
-    # B1：title(string)
-    # B2：sections = array，items 是 object{heading:string, content:string}
-    #     ——三层嵌套：type/items/properties/required，想清楚每层各管什么
-    # B3：chart_paths = array of string，可选（不进 required）
+    # parameters：sections 为 array[object{heading,content}] 三层嵌套 schema；
+    # chart_paths 为可选 array[string]（不进 required）
     parameters: dict = {
         "type": "object",
         "properties": {
@@ -70,31 +67,12 @@ class ReportGenerator(BaseTool):
     REPORTS_DIR: str = "workspace/reports"
 
     async def execute(self, title: str, sections: list, chart_paths: list = None) -> ToolResult:
-        """
-        #入参校验 ──
-        sections 空 → fail_response；title 清洗非法文件名字符（工具 3 同款思路，怎么复用？）。
-
-        #chart_paths 逐个检查存在性 ──
-        不存在的 → 跳过 + 在报告正文对应位置留一句警告（不中断整个报告）。
-
-        #HTML 模板拼接（f-string 或 Jinja2 二选一，建议 Jinja2——简历多一个词）──
-        结构：标题 + 各 section(heading/content) + 嵌图区 + token 统计页脚。
-          直接 iframe 多张图报告会上 20MB。线索：读图表文件里 <div id="plotly...">...</div>
-          段 + 页面只引一次 plotly.js 的 <script src="CDN地址">。
-          （或者反过来：改工具 3 write_html 传 include_plotlyjs="cdn" 生成 10KB 级小文件——
-
-        #token 消耗统计（0928 增补·"效果数字"来源，面试硬通货）──
-        报告末尾附「本次任务累计消耗 N tokens ≈ ¥X」。
-        取数线索：grep 一下 D:\\projects\\OpenManus\\app\\llm.py 里的 total_ 字样——
-        LLM 类是全局单例（__new__ 里 _instances），整个会话的累计计数就存在那。
-        找到字段名后想：工具怎么拿到那个实例？（提示：同名单例，再 new 一次拿到的是同一个）
-        ¥ 换算：查 DeepSeek 官网当前定价，写常量并注明查询日期。
-
-        #落盘返回 ──
-        目录自动创建 → workspace/reports/时间戳_标题.html → success_response(路径)。
-
-        （面试考点：为什么报告由代码生成而不是模型直接吐 HTML？——确定性：结构与内容分离）
-        """
+        """流程：入参校验 → 图表存在性检查（缺失警告跳过，交付物宁缺勿断）
+        → 图表内联进报告（单文件自包含，可独立转发）
+        → token 消耗页脚（读 LLM 进程单例本轮计数，Agent 入口起算为 0）
+        → 落盘 workspace/reports/时间戳_标题.html → success_response(路径)。
+        报告由代码模板生成而非模型直出 HTML：结构确定性归代码、内容归模型；
+        token 数字必须代码统计：模型看不见 usage，估算即幻觉。"""
         #入参校验
         if not sections:
             return self.fail_response(

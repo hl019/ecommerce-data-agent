@@ -5,7 +5,7 @@
     D:\\projects\\ecommerce-data-agent\\scripts\\w3_setup\\ingest_corpus.py
 （此脚本在仓库里直接跑，不需要 sync 进 OpenManus——它不 import app 包）
 
-用法（语料按《ZCode-W3-语料建立.md》落盘后）：
+用法（语料按头部三行格式落盘后）：
     D:\\projects\\OpenManus\\.venv\\Scripts\\python.exe D:\\projects\\ecommerce-data-agent\\scripts\\w3_setup\\ingest_corpus.py
 先 $env:ZHIPU_API_KEY = "sk-..."（key 只走环境变量）
 

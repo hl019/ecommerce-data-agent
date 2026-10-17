@@ -7,9 +7,9 @@ r"""
     D:\projects\ecommerce-data-agent\app\tool\customer_lookalike.py
     D:\projects\OpenManus\app\tool\customer_lookalike.py
 
-三个算法决策（面试要能讲，#7 口径：讲设计不推公式）：
+三个算法决策（设计理由）：
   1) 特征 = "客户×商品"购买数量矩阵（pivot_table）——最朴素也最有效
-  2) 标准化 + PCA：标准化拉平量纲（防大数吞小数）；PCA 去噪、抗维度灾难（🟢 公式不学）
+  2) 标准化 + PCA：标准化拉平量纲（防大数吞小数）；PCA 去噪、抗维度灾难
   3) cosine 距离：只比"购买构成"、不比"购买规模"——业务上更合理
      （例：A 买 3 书 3 电器，B 买 30 书 30 电器 → 构成相同，业务上很像；欧氏距离会说不像）
 """

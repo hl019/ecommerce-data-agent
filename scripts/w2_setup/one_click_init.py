@@ -98,8 +98,8 @@ def verify(password: str) -> bool:
             if cnt != expected:
                 ok = False
             print(f"[3/3] {table}: {cnt} 行  [{mark}]")
-        print("\n--- 验证查询：月度销售额 Top3（W2 工具 1 将让 Agent 自己跑这类 SQL）---")
-        # pymysql 是 pyformat 参数风格：SQL 里字面的 % 必须写成 %%，否则被当占位符
+        print("\n--- 验证查询：月度销售额 Top3 ---")
+        # pymysql 是 pyformat 参数风格：SQL 里字面的 % 必须写成 %%，否则会被误当作格式化参数位
         rows = conn.exec_driver_sql(
             "SELECT DATE_FORMAT(TransactionDate, '%%Y-%%m') AS month, "
             "ROUND(SUM(TotalValue), 2) AS sales "

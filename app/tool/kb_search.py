@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-检索工具 kb_search —— 电商知识库语义检索（W3 主工具）
+检索工具 kb_search —— 电商知识库语义检索
 
     D:\\projects\\ecommerce-data-agent\\app\\tool\\kb_search.py
     D:\\projects\\OpenManus\\app\\tool\\kb_search.py
@@ -100,7 +100,7 @@ class KBSearch(BaseTool):
         if not picked:
             return ToolResult(output="知识库中未找到与问题相关的内容（相关度均低于阈值）。请换一种问法，或确认问的是业务口径/操作类问题。")
 
-        #+4：结果拼装（引用来源 + 相关度分数）──
+        # 结果拼装（引用来源 + 相关度分数）
         lines = [f"知识库检索到 {len(picked)} 条资料（已按相关度降序；分数仅供排序参考，绝对值不可靠）：\n"]
         for i, (score, doc, meta) in enumerate(picked, 1):
             title = meta.get("title", "未知")

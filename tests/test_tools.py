@@ -119,6 +119,26 @@ run("sales_sql_query", "WITH...DELETE 绕过尝试应被拒",
     lambda: t1.execute(sql="WITH m AS (SELECT 1 AS one) DELETE FROM 不存在的表xyz WHERE one=m.one"),
     check_cte_delete_blocked)
 
+# ── 守卫补强回归（10-17 审计整改 R1）：WITH+INSERT 必须被第二层拦（纯守卫，无需库）──
+def check_with_insert_blocked(result):
+    combined = (error_text(result) or "") + output_text(result)
+    assert ("写操作关键字" in combined) or ("拒绝" in combined) or ("只允许" in combined), \
+        f"WITH...INSERT 必须被第二层拦截，实际: {combined[:120]}"
+    assert "1045" not in combined and "2003" not in combined, "应被守卫拦截，而不是走到连接层"
+
+run("sales_sql_query", "WITH...INSERT 应被第二层拦截",
+    lambda: t1.execute(sql="WITH x AS (SELECT 1 AS one) INSERT INTO Products SELECT * FROM x"),
+    check_with_insert_blocked)
+
+# 尾分号回归：`SELECT 1;` 应剥分号放行（走到连接层即算守卫放行）
+def check_tail_semicolon_ok(result):
+    combined = (error_text(result) or "") + output_text(result)
+    assert "只允许单条查询" not in combined and "只允许 SELECT" not in combined, \
+        f"尾分号应被剥离放行，实际: {combined[:100]}"
+
+run("sales_sql_query", "尾分号 SELECT 1; 应放行",
+    lambda: t1.execute(sql="SELECT 1;"), check_tail_semicolon_ok)
+
 # ============ 工具 2：sales_stats ============
 t2 = SalesStats()
 
@@ -277,7 +297,7 @@ else:
 
 # ============ 汇总 ============
 print("\n" + "=" * 62)
-print("W2 工具自测结果")
+print("工具自动化测试结果")
 print("=" * 62)
 icons = {"PASS": "[OK]  ", "FAIL": "[FAIL]", "SKIP": "[SKIP]"}
 for tool, case, status, msg in RESULTS:
@@ -290,7 +310,7 @@ n_skip = sum(1 for r in RESULTS if r[2] == "SKIP")
 print("-" * 62)
 print(f"PASS {n_pass} / FAIL {n_fail} / SKIP {n_skip}（共 {len(RESULTS)} 用例）")
 if n_skip:
-    print("提示：SKIP = 工具尚未实现")
+    print("说明：SKIP = 工具尚未实现")
 if n_fail == 0 and n_skip == 0:
     print(">>> 四个工具全部就绪，可以接通 EcommerceAgent 跑端到端 MVP 了")
 sys.exit(1 if n_fail else 0)

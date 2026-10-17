@@ -16,7 +16,7 @@ from app.tool.base import BaseTool, ToolResult
 VALID_CHARTS = ["line", "bar", "barh", "histogram", "pie"]
 
 class PlotChart(BaseTool):
-    """Plotly 绘图工具（W2 工具 3）"""
+    """Plotly 绘图工具"""
 
     name: str = "plot_chart"
 
@@ -75,22 +75,10 @@ class PlotChart(BaseTool):
         x: str,
         y: str = "",
     ) -> ToolResult:
-        """
-        #解析数据 ──
-        json.loads(data_json) → pd.DataFrame。
-        你的容错底线是什么？解析失败时 fail_response 写什么让模型能重传？
-
-        #列名校验 ──
-        x / y 必须在 DataFrame 列里，不在 → fail_response **回显实际列名**。
-
-        #图型分发 ──
-        chart_type → plotly.express 对应函数（px.line/bar/barh/histogram/pie），
-        非法值 → fail_response 回显 VALID_CHARTS。
-
-        #落盘与返回 ──
-        目录自动创建 → fig.write_html(时间戳_标题.html) → success_response(路径+一句解读提示)。
-        （面试考点：为什么返回路径而不是让模型复述数据？——图表是真数据，文本才防幻觉）
-        """
+        """流程：解析 JSON → 列名校验（失败回显实际列名，给模型可行动的反馈）
+        → 按 chart_type 分发 plotly.express 图型（非法值回显合法列表）
+        → 落盘 HTML（CDN 引用，单文件约 10KB）→ 返回文件路径。
+        返回路径而非让模型复述数据：图表由真实数据渲染，转述文本才会引入幻觉。"""
         #解析数据（JSON 字符串 → DataFrame）
         try:
             data = json.loads(data_json)

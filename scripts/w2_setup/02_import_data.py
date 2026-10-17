@@ -15,7 +15,7 @@ import pandas as pd
 from sqlalchemy import create_engine
 import os
 
-# ============ 配置区（学生按自己情况改）============
+# ============ 配置区 ============
 MYSQL_USER = "root"           # MySQL 用户名
 MYSQL_PASSWORD = ""           # MySQL 密码（空字符串=无密码）
 MYSQL_HOST = "localhost"      # MySQL 地址
@@ -100,5 +100,5 @@ if __name__ == "__main__":
     verify_import()
 
     print("\n" + "="*50)
-    print("✓ 全部完成！W2 工具层开发可以开始了。")
+    print("✓ 初始化完成，数据库已就绪。")
     print("="*50)

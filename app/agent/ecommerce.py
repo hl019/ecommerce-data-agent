@@ -30,7 +30,7 @@ class EcommerceAgent(ToolCallAgent):
     system_prompt: str = SYSTEM_PROMPT
     next_step_prompt: str = NEXT_STEP_PROMPT
 
-    # 与 Manus 对齐的观察值截断（防大表格撑爆上下文，面试考点）
+    # 观察值截断：防大结果集撑爆上下文（与底座 Manus 配置对齐）
     max_observe: int = 10000
     max_steps: int = 20
 
@@ -47,7 +47,7 @@ class EcommerceAgent(ToolCallAgent):
         )
     )
     async def run(self, request=None):
-        """B2 修复（Z13）：每次任务开始时重置 LLM token 计数。
+        """每次任务开始时重置 LLM token 计数。
         LLM 是进程级单例、计数从不重置，连问第二个问题时报告页脚会变成累计值。
         重置后 report_generator 读到的就是本轮消耗。"""
         from app.llm import LLM

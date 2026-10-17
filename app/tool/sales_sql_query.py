@@ -9,7 +9,7 @@ import pymysql
 from app.tool.base import BaseTool, ToolResult
 
 class SalesSQLQuery(BaseTool):
-    """只读 SQL 查询工具（W2 工具 1）"""
+    """只读 SQL 查询工具"""
 
     name: str = "sales_sql_query"
 
@@ -36,24 +36,8 @@ class SalesSQLQuery(BaseTool):
     }
 
     async def execute(self, sql: str, row_limit: int = 50) -> ToolResult:
-        """
-        #只读守卫 ──
-        判断 sql 是不是 SELECT 开头（提示：strip + upper/lower + startswith）。
-        不是 → return self.fail_response(一句可读的拒绝理由)。
-
-        #建立连接 ──
-        pymysql.connect(host=?, user=?, password=?, database="ecommerce_agent", charset="utf8mb4")
-
-        #执行并限量取数 ──
-        cursor.execute(sql)；然后取 row_limit 行（提示：fetch 家族里哪个带限量参数？）。
-
-        #拼 markdown 表格 ──
-        列名从 cursor.description 拿；表头一行 + 分隔一行 + 数据每行一行。
-
-        #收尾 ──
-        成功 → self.success_response(表格字符串)；
-        任何异常 → except 里 self.fail_response(可读错误)；finally 里关连接。
-        """
+        """流程：只读守卫 → 连接 → 限量取数 → markdown 表格 → success/fail 收尾。
+        连接使用只读账号（仅 SELECT 权限）：代码守卫之外由数据库权限层二次兜底。"""
 
         # ── 只读守卫（加强版）：剥注释 / 白名单开头 / 剥尾分号 / 禁多语句 / 全文禁写关键字 ──
         clean_sql = re.sub(r"^\s*(--[^\n]*\n|/\*.*?\*/)+", "", sql, flags=re.S).strip()
@@ -88,7 +72,7 @@ class SalesSQLQuery(BaseTool):
                 password=os.environ.get("MYSQL_RO_PASSWORD", ""),
                 database="ecommerce_agent",
                 charset="utf8mb4",
-                connect_timeout=5,   # H3 修复（Z13）：MySQL 挂起时避免 Agent 干等 TCP 超时
+                connect_timeout=5,   # 防 MySQL 挂起时无限等待
             )
 
             #执行并限量取数
@@ -107,7 +91,7 @@ class SalesSQLQuery(BaseTool):
                 cells = [str(v) if v is not None else "" for v in r]
                 lines.append("| " + " | ".join(cells) + " |")
             table = "\n".join(lines)
-            # 截断提示：取满 row_limit 行 → 可能还有更多数据没取
+            # 截断标注：取满 row_limit 行 → 可能还有更多数据没取
             if len(rows) == row_limit:
                 table += f"\n\n> 注意：结果已按 row_limit={row_limit} 截断，可能还有更多数据未显示。"
 
