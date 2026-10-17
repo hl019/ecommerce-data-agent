@@ -55,20 +55,27 @@ class SalesSQLQuery(BaseTool):
         任何异常 → except 里 self.fail_response(可读错误)；finally 里关连接。
         """
 
-        #只读守卫（加强版）——剥注释 / 白名单开头 / 禁分号 / 防 CTE 绕过 / 防写文件
+        # ── 只读守卫（加强版）：剥注释 / 白名单开头 / 剥尾分号 / 禁多语句 / 全文禁写关键字 ──
         clean_sql = re.sub(r"^\s*(--[^\n]*\n|/\*.*?\*/)+", "", sql, flags=re.S).strip()
+        # 先剥掉单个尾分号（模型写 SQL 习惯带 `;`，不剥会把最常见合法输入误杀）
+        if clean_sql.endswith(";"):
+            clean_sql = clean_sql[:-1].rstrip()
         upper_sql = clean_sql.upper()
 
         if not upper_sql.startswith(("SELECT", "WITH", "(")):
             return self.fail_response(f"只允许 SELECT 只读查询，拒绝执行：{sql}")
-        # H1 修复（Z13）：分号检查先剥掉字符串字面量内的内容——
-        # 否则 SELECT ... WHERE CustomerName LIKE 'a;b' 里合法的分号会被误判为多语句
-        # （这是"宁误杀勿放过"的反面：守卫要严，但不能伤到合法查询）
+        # 分号检查先剥掉字符串字面量（`LIKE 'a;b'` 里的合法分号不该误杀）
         sql_no_literals = re.sub(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", "", clean_sql)
         if ";" in sql_no_literals:
             return self.fail_response("只允许单条查询语句，不接受分号分隔的多语句。")
-        if upper_sql.startswith("WITH") and re.search(r"(^|\))\s*(UPDATE|DELETE)\b", upper_sql):
-            return self.fail_response(f"CTE 后只允许接 SELECT，检测到写操作，拒绝执行：{sql}")
+        # 写操作关键字检查覆盖全文（同样先剥字面量），不只拦 WITH 后的 UPDATE/DELETE——
+        # 否则 `WITH x AS (...) INSERT INTO ...` 会穿过这一层
+        write_check = re.sub(r"'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"", "", upper_sql)
+        if re.search(
+            r"\b(INSERT|UPDATE|DELETE|REPLACE|DROP|ALTER|TRUNCATE|CREATE|GRANT|REVOKE|RENAME)\b",
+            write_check,
+        ):
+            return self.fail_response(f"检测到写操作关键字，只允许 SELECT 只读查询，拒绝执行：{sql}")
         if re.search(r"\bINTO\s+(OUTFILE|DUMPFILE)\b", upper_sql):
             return self.fail_response(f"禁止 SELECT ... INTO OUTFILE，拒绝执行：{sql}")
 

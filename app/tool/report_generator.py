@@ -100,12 +100,21 @@ class ReportGenerator(BaseTool):
             return self.fail_response(
                 "sections 不能为空——报告至少需要一个章节，形如 [{\"heading\":\"结论\",\"content\":\"...\"}]。"
             )
-        # B1 修复（Z13）：sections 元素类型校验
+        # sections 元素类型校验：元素必须是 dict，且 heading/content 必须是字符串
         for s in sections:
             if not isinstance(s, dict):
                 return self.fail_response(
                     f"sections 元素必须是字典，收到 {type(s).__name__}。正确格式：[{{\"heading\":\"结论\",\"content\":\"...\"}}]"
                 )
+            # 字段值校验：content=None 会让 escape() 抛 AttributeError，这里先归一成空串
+            for _k in ("heading", "content"):
+                if s.get(_k) is None:
+                    s[_k] = ""
+                elif not isinstance(s[_k], str):
+                    return self.fail_response(
+                        f"sections 元素字段 {_k} 必须是字符串，收到 {type(s[_k]).__name__}。"
+                        f"正确格式：[{{\"heading\":\"结论\",\"content\":\"...\"}}]"
+                    )
 
         safe_title = "".join(c for c in title if c not in '\\/:*?"<>|')[:30] or "report"
 

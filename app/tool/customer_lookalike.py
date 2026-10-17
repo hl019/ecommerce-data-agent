@@ -85,7 +85,7 @@ class CustomerLookalike(BaseTool):
 
         #KNN 检索（cosine）──
         # 坑：kneighbors 返回的第一个永远是"自己"（距离 0）→ 查 top_k+1 个，取的时候从 1 开始
-        k = min(int(top_k), len(pivot.index) - 1)
+        k = max(1, min(int(top_k), len(pivot.index) - 1))  # top_k ≤ 0 兜底为 1，避免 sklearn 抛 InvalidParameterError
         model = NearestNeighbors(n_neighbors=k + 1, metric="cosine")
         model.fit(reduced)
 
