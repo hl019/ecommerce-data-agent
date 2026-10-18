@@ -52,7 +52,12 @@ flowchart TB
     AG --- LOOP
     LOOP --- MEM
     LOOP --- TERM
-    AG -->|"Function Calling"| T1 & T2 & T3 & T4 & T5 & T6
+    AG -->|"Function Calling"| T1
+    AG -->|"Function Calling"| T2
+    AG -->|"Function Calling"| T3
+    AG -->|"Function Calling"| T4
+    AG -->|"Function Calling"| T5
+    AG -->|"Function Calling"| T6
     T1 --> DB
     T2 --> CSV
     T6 --> CSV
