@@ -103,6 +103,8 @@ python -m streamlit run app/web/streamlit_app.py
 
 > 🔐 **账号分工**：`MYSQL_PASSWORD`（root）仅用于**初始化建表**；`MYSQL_RO_USER` / `MYSQL_RO_PASSWORD`（只读账号，仅 `GRANT SELECT`）用于**所有查询**——数据库层兜底防御。
 
+> ⚙️ **路径可配置**：关键路径默认指向演示机（`D:\projects\...`），换环境时用环境变量覆盖——`OPENMANUS_HOME`（OpenManus 根目录）、`ECOM_DATA_DIR`（CSV 数据目录）、`ECOM_KB_DIR`（向量库目录）。不设则使用默认值。
+
 ## 技术要点与踩坑精选
 
 1. **切块参数"写了 ≠ 生效"**：首版切块平均仅 40 字——`max_len=500` 一次都没触发（标题太密）。改为"内容攒够 200 字再切"后升至 294 字，命中内容从"只有标题"变为完整段落。

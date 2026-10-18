@@ -13,12 +13,14 @@ import os
 import re
 import sys
 
-sys.path.insert(0, r"D:\projects\OpenManus")
-os.chdir(r"D:\projects\OpenManus")
+# OpenManus 根目录：默认演示机路径，换环境用 OPENMANUS_HOME 覆盖
+OPENMANUS_HOME = os.environ.get("OPENMANUS_HOME", r"D:\projects\OpenManus")
+sys.path.insert(0, OPENMANUS_HOME)
+os.chdir(OPENMANUS_HOME)
+
+REPORTS_DIR = os.path.join(OPENMANUS_HOME, "workspace", "reports")
 
 import streamlit as st
-
-REPORTS_DIR = r"D:\projects\OpenManus\workspace\reports"
 
 
 def extract_steps(messages):

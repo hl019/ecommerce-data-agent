@@ -98,8 +98,8 @@ class SalesStats(BaseTool):
         "required": ["analysis_type"],
     }
 
-    # CSV 数据目录（复用你已有的电商仓库数据；不依赖 MySQL）
-    DATA_DIR: str = r"D:\projects\hl019-ecommerce-viaapi\data"
+    # CSV 数据目录（默认演示机路径，换环境用环境变量 ECOM_DATA_DIR 覆盖）
+    DATA_DIR: str = os.environ.get("ECOM_DATA_DIR", r"D:\projects\hl019-ecommerce-viaapi\data")
 
     async def execute(self, analysis_type: str, top_n: int = 10) -> ToolResult:
         """

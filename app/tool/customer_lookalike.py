@@ -24,7 +24,8 @@ from sklearn.preprocessing import StandardScaler
 
 from app.tool.base import BaseTool, ToolResult
 
-DATA_DIR = r"D:\projects\hl019-ecommerce-viaapi\data"
+# 数据目录：默认指向演示机路径，换环境用环境变量 ECOM_DATA_DIR 覆盖
+DATA_DIR = os.environ.get("ECOM_DATA_DIR", r"D:\projects\hl019-ecommerce-viaapi\data")
 
 class CustomerLookalike(BaseTool):
     """相似客户检索（Lookalike 相似人群）"""

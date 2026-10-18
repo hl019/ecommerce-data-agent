@@ -12,7 +12,8 @@ import chromadb
 
 from app.tool.base import BaseTool, ToolResult
 
-KB_DIR = r"D:\projects\knowledge\ecom_kb"     # 知识库存放处（ingest_corpus 写、本工具读）
+# 知识库存放处（ingest_corpus 写、本工具读）；默认演示机路径，换环境用 ECOM_KB_DIR 覆盖
+KB_DIR = os.environ.get("ECOM_KB_DIR", r"D:\projects\knowledge\ecom_kb")
 COLLECTION = "ecom_kb"
 EMBED_MODEL = "embedding-3"                   # 必须与 ingest 时一致（向量与模型绑定！）
 ZHIPU_KEY = os.environ.get("ZHIPU_API_KEY", "")
