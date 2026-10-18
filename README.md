@@ -4,11 +4,10 @@
 >
 > **6 个自研工具 ｜ RAG 知识库（9 篇文档 / 82 个语义块 / 平均 294 字）｜ 单次端到端 ≈ ¥0.05**
 
-<!-- 📺 演示视频（1'40"，本地已录制：learning-notes/W4-演示视频-库存口径问答.webm）。GitHub 不内嵌 webm，需要时可随简历一并提供。 -->
 
 ## 演示
 
-> 🎬 **演示视频（1 分 40 秒）**：一句话提问 → Agent 执行时间线 → 报告下载。**已录制，可随简历一并提供。**
+> 🎬 **[▶️ 演示视频（1 分 40 秒）](docs/demo/W4-演示视频-库存口径问答.webm)**：一句话提问 → Agent 执行时间线 → 带出处的报告生成与下载。GitHub 不内嵌 webm 播放器——点开若提示下载，存本地用浏览器打开即是完整体验。
 
 ## 它解决什么问题
 
@@ -104,6 +103,21 @@ python -m streamlit run app/web/streamlit_app.py
 > 🔐 **账号分工**：`MYSQL_PASSWORD`（root）仅用于**初始化建表**；`MYSQL_RO_USER` / `MYSQL_RO_PASSWORD`（只读账号，仅 `GRANT SELECT`）用于**所有查询**——数据库层兜底防御。
 
 > ⚙️ **路径可配置**：关键路径默认指向演示机（`D:\projects\...`），换环境时用环境变量覆盖——`OPENMANUS_HOME`（OpenManus 根目录）、`ECOM_DATA_DIR`（CSV 数据目录）、`ECOM_KB_DIR`（向量库目录）。不设则使用默认值。
+
+## 运行前提与常见错误
+
+**跑起来需要四样（缺一会在启动时报可读错误）**：
+1. **环境**：Python 3.12 + 一份装好依赖的 OpenManus venv（本项目复用其解释器，项目侧依赖见 `requirements.txt`）；
+2. **数据库**：本机 MySQL 8 且已初始化——`python scripts/w2_setup/one_click_init.py`（建 3 表 200/100/1000；建表用 root、查询走只读账号）；
+3. **知识库**：`python scripts/w3_setup/ingest_corpus.py` 跑一次（读默认演示机路径的 `raw/` 9 篇语料，产出 82 块向量库）；
+4. **密钥**：DeepSeek key 在 OpenManus `config/config.toml`；`$env:MYSQL_RO_USER / MYSQL_RO_PASSWORD / ZHIPU_API_KEY` 在**启动同一终端**设置（换机器再加 `OPENMANUS_HOME / ECOM_DATA_DIR / ECOM_KB_DIR`）。
+
+| 症状 | 先查什么 |
+|---|---|
+| `1045 / 1142` | 只读账号密码错 / 权限层正常拒绝（1142=用只读账号干了写事，是好事） |
+| "知识库打开失败" | `ECOM_KB_DIR` 路径，或先跑第 3 步 ingest |
+| HTTP 429 | 读**响应体业务码**再动手：1113=欠费充值 / 1302=限流（ingest/评测已内置间隔+退避） / 1308=额度上限 |
+| 启动即报环境变量未设 | 忘了同窗口设置（双击 bat 会开新进程，这就是 README 不用 bat 的原因） |
 
 ## 技术要点与踩坑精选
 
