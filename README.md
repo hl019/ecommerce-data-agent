@@ -70,6 +70,7 @@ flowchart TB
 - **RAG 知识库**：9 篇真实公开文档 → 82 个语义块（**幂等入库**，重跑结果一致）；回答带来源引用；**无关问题实测正确拒答**
 - **检索调优**：定位切块过碎问题（平均 **40 → 294 字**）；发现向量检索分数无区分度（相关 0.842 / 不相关 0.797）后，将相关性判断交由大模型结合上下文处理
 - **可观测与评测**：**19 条自动化测试用例**（14 条纯本地 / 2 条含数据库 / 3 条真实 API·live 门控；含守卫绕过与尾分号回归固化）；每步执行日志可追溯；token 成本统计
+- **RAG 检索评测**：自建 20 题评测集（基础 15 题 + 口语化 5 题·刻意不用文档原词），**top-3 命中率均 100%**（按 `source` 文档名判定）
 - **Web 界面**：Streamlit 一句话输入 → 回答 + 报告链接 + 执行过程展开
 
 ## 快速开始
@@ -77,7 +78,7 @@ flowchart TB
 > 以下命令以 **PowerShell**（Windows）为例。
 
 ```powershell
-# 1. 依赖（★ OpenManus 基座是 uv 管理的 venv，它没有 pip）
+# 1. 依赖（注意：OpenManus 基座为 uv 管理的 venv，无 pip）
 uv pip install -r requirements.txt --python <你的 OpenManus venv 路径>\Scripts\python.exe
 
 # 2. 初始化数据库（用 root 账号建表与灌数据）
@@ -88,7 +89,7 @@ python scripts/w2_setup/one_click_init.py
 $env:MYSQL_RO_PASSWORD="<只读账号密码>"; $env:ZHIPU_API_KEY="sk-..."
 python scripts/run_agent.py
 
-# 3b. Web 界面（★ 必须在同一终端窗口先设环境变量）
+# 3b. Web 界面（注意：必须在同一终端窗口先设环境变量）
 $env:MYSQL_RO_PASSWORD="<只读账号密码>"; $env:ZHIPU_API_KEY="sk-..."
 python -m streamlit run app/web/streamlit_app.py
 ```

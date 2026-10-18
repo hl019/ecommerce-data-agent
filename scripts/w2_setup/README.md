@@ -24,7 +24,7 @@
    exit
    ```
 
-**四条验收**（考核官口径，全绿才算完）：
+**四条验收**（全绿才算完成）：
 1. `services.msc` 里 MySQL80 状态「正在运行」；
 2. `netstat -an | findstr 3306` 有 LISTENING；
 3. 新终端 `mysql -u root -p` 输密码能登录；
@@ -34,7 +34,7 @@
 
 ---
 
-## 方式一：一键初始化（推荐，考核官验收口径）
+## 方式一：一键初始化（推荐）
 
 双击 `一键初始化数据库.bat`，或在 OpenManus 虚拟环境里执行：
 
@@ -119,7 +119,6 @@ pip install pandas sqlalchemy pymysql -i https://pypi.tuna.tsinghua.edu.cn/simpl
 
 ---
 
-## 下一步
+## 说明
 
-环境准备完成后，进入 W2 核心任务：亲手写四个工具。
-详见《ZCode-修订版计划.md》（review）W2 部分 + 《ZCode-03-W2工具设计草案.md》。
+本目录脚本用于初始化演示数据库（建表 + 灌入 200/100/1000 行样本数据），是四个分析工具的数据基础。
