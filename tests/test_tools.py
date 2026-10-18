@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-工具自动化测试套件：17 用例三档（纯本地 / 含数据库 / live 门控），坏输入用例固化历次修复。
+工具自动化测试套件：19 用例三档（14 纯本地 / 2 含数据库 / 3 live 门控），坏输入与守卫绕过用例固化历次修复。
 
 运行方式（任意 python，需已装 pandas/sqlalchemy/pymysql/plotly）：
     python D:\\projects\\ecommerce-data-agent\\tests\\test_tools.py
