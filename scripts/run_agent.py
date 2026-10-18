@@ -13,6 +13,7 @@ import sys
 
 # OpenManus 根目录：默认演示机路径，换环境用 OPENMANUS_HOME 覆盖（与 streamlit_app 同口径）
 OPENMANUS_HOME = os.environ.get("OPENMANUS_HOME", r"D:\projects\OpenManus")
+REPO_HOME = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # 本仓库根，提示语用它拼路径
 sys.path.insert(0, OPENMANUS_HOME)
 os.chdir(OPENMANUS_HOME)  # workspace/reports 等相对路径落在这里
 
@@ -22,7 +23,7 @@ def precheck():
     from app.prompt.ecommerce import SYSTEM_PROMPT
     if not SYSTEM_PROMPT.strip():
         problems.append(
-            "SYSTEM_PROMPT 还是空的 → 先填 D:\\projects\\ecommerce-data-agent\\app\\prompt\\ecommerce.py 并跑 sync bat")
+            f"SYSTEM_PROMPT 还是空的 → 先填 {os.path.join(REPO_HOME, 'app', 'prompt', 'ecommerce.py')} 并跑 sync bat")
     from app.agent.ecommerce import EcommerceAgent
     tool_names = {t.name for t in EcommerceAgent().available_tools.tools}
     expected = {"sales_sql_query", "sales_stats", "plot_chart", "report_generator",
@@ -53,7 +54,7 @@ async def main():
         result = await agent.run(question)
         print(f"\n{'='*60}\n===== 最终答案 =====\n{result}")
     finally:
-        print("\n（报告/图表产物在 D:\\projects\\OpenManus\\workspace\\ 下，token 数看报告页脚）")
+        print(f"\n（报告/图表产物在 {os.path.join(OPENMANUS_HOME, 'workspace')}\\ 下，token 数看报告页脚）")
 
 
 if __name__ == "__main__":
