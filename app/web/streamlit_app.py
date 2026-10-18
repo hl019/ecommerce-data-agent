@@ -3,7 +3,7 @@ r"""
 W4 最小 Web UI —— 给 EcommerceAgent 套一页浏览器界面
 
 运行（同一终端窗口先设好环境变量）：
-    $env:MYSQL_RO_PASSWORD = "只读账号密码"
+    $env:MYSQL_RO_PASSWORD = "<只读账号密码>"
     $env:ZHIPU_API_KEY = "你的key"
     D:\projects\OpenManus\.venv\Scripts\python.exe -m streamlit run D:\projects\ecommerce-data-agent\app\web\streamlit_app.py
 """
