@@ -22,8 +22,9 @@ import urllib.parse
 import requests
 import chromadb
 
-RAW_DIR = r"D:\projects\knowledge\raw"          # 语料源（仓库外，版权策略见语料文档）
-KB_DIR = r"D:\projects\knowledge\ecom_kb"       # chromadb 持久化目录
+# 默认演示机路径，换环境用环境变量覆盖（与 kb_search 共用 ECOM_KB_DIR，天然一致）
+RAW_DIR = os.environ.get("ECOM_RAW_DIR", r"D:\projects\knowledge\raw")     # 语料源（仓库外，版权策略见语料文档）
+KB_DIR = os.environ.get("ECOM_KB_DIR", r"D:\projects\knowledge\ecom_kb")  # chromadb 持久化目录
 COLLECTION = "ecom_kb"
 EMBED_MODEL = "embedding-3"                     # 换这行任何值 = 必须重建整个库（向量与模型绑定！）
 ZHIPU_KEY = os.environ.get("ZHIPU_API_KEY", "")  # key 只从环境变量来，绝不写进文件

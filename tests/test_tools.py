@@ -295,6 +295,43 @@ else:
     run("kb_search", "top_k=0 兜底不炸",
         lambda: t5.execute(query="复购率", top_k=0), check_kb_topk0)
 
+# ── A3/A5 回归（10-18 Z24）：必须放在 t4 / t6 实例定义之后，否则 NameError ──
+def check_a3_none_content(result):
+    assert result.error is None, f"A3 回归：content=None 应被归一降级，实际抛错: {result.error[:100]}"
+    assert ".html" in output_text(result), f"A3 回归：应正常生成报告路径，实际: {output_text(result)[:100]}"
+
+run("report_generator", "A3回归：content=None 归一不抛异常",
+    lambda: t4.execute(title="A3t", sections=[{"heading": "h", "content": None}]),
+    check_a3_none_content)
+
+
+def check_a3_nonstr_field(result):
+    combined = (error_text(result) or "") + output_text(result)
+    assert "字符串" in combined or "必须是" in combined, \
+        f"A3 回归：字段非字符串应 fail+格式示例，实际: {combined[:100]}"
+
+run("report_generator", "A3回归：content 非字符串→拒+示例",
+    lambda: t4.execute(title="A3t", sections=[{"heading": "h", "content": 123}]),
+    check_a3_nonstr_field)
+
+
+def check_a5_neg_topk(result):
+    err = error_text(result)
+    assert not (err and ("InvalidParameter" in err or "n_neighbors" in err)), \
+        f"A5 回归：top_k 负数应被 max(1,..) 兜底，实际: {err[:100]}"
+    assert err is None or "不存在" not in err, "A5 兜底后应正常返回 1 条相似客户"
+
+run("customer_lookalike", "A5回归：top_k=-5 兜底不抛",
+    lambda: t6.execute(customer_id="C0001", top_k=-5), check_a5_neg_topk)
+
+
+def check_a5_zero_topk(result):
+    assert error_text(result) is None, "A5 回归：top_k=0 应兜底为 1 条正常返回"
+    assert len(json.loads(output_text(result))["相似客户"]) >= 1
+
+run("customer_lookalike", "A5回归：top_k=0 兜底返回",
+    lambda: t6.execute(customer_id="C0001", top_k=0), check_a5_zero_topk)
+
 # ============ 汇总 ============
 print("\n" + "=" * 62)
 print("工具自动化测试结果")
