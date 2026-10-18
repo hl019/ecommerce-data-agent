@@ -78,8 +78,8 @@ class KBSearch(BaseTool):
             col = client.get_collection(COLLECTION)
         except Exception as e:
             return self.fail_response(
-                f"知识库打开失败：{e}（可能还没跑 ingest_corpus.py 建库；"
-                f"先跑 D:\\projects\\ecommerce-data-agent\\scripts\\w3_setup\\ingest_corpus.py）"
+                f"知识库打开失败：{e}（可能还没建库；先跑本项目 "
+                f"scripts/w3_setup/ingest_corpus.py，见 README「快速开始」第 3 步）"
             )
         if col.count() == 0:
             return self.fail_response("知识库为空——先跑 ingest_corpus.py 入库语料")

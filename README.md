@@ -135,7 +135,11 @@ python -X utf8 tests/test_tools.py      # 期望 PASS 23 / FAIL 0 / SKIP 0
 python -X utf8 tests/eval_rag.py        # RAG 检索评测 20 题（需 ZHIPU_API_KEY）
 ```
 
-**三档口径**（哪些测试要什么环境）：18 条纯本地（任何机器直接跑）· 2 条含数据库（需 MySQL 已初始化）· 3 条 live 门控（检测到 `ZHIPU_API_KEY` 才真跑，否则显式 SKIP 不误伤）。检索评测统计口径见"核心能力"节：top-3 命中 = 检索召回指标，不等同端到端回答正确率。
+**三档口径**（哪些测试要什么环境）：18 条纯本地（任何机器直接跑）· 2 条含数据库（需 MySQL 已初始化 + `MYSQL_RO_PASSWORD`）· 3 条 live 门控（检测到 `ZHIPU_API_KEY` 才真跑，否则显式 SKIP 不误伤）。
+
+> ⚠️ **2 条含数据库用例在未设 `MYSQL_RO_PASSWORD` 时是 FAIL（不是 SKIP）**——有意设计：**环境缺失应当显式报错，而不是静默跳过**（静默 SKIP 会让人误以为"已经跑过"）。
+
+检索评测统计口径见"核心能力"节：top-3 命中 = 检索召回指标，不等同端到端回答正确率。
 
 ## 已知限制
 
