@@ -70,54 +70,62 @@ flowchart TB
 
 ## 核心能力
 
-- **6 个自研工具接入 Agent**：只读 SQL 查询（**三层安全防御**）、pandas 统计分析、Plotly 交互图表、HTML 报告生成（含 token 成本页脚）、RAG 知识库检索、相似客户分析（PCA + KNN），全部由大模型自主调度（Function Calling）
+- **6 个自研工具接入 Agent**：只读 SQL 查询（**三层安全防御**）、pandas 统计分析、Plotly 交互图表、HTML 报告生成（含 token 成本页脚）、RAG 知识库检索、相似客户分析（PCA + KNN）；由大模型经 Function Calling 选用，提示词含问题分流规则（数字类→查库、口径类→知识库、相似人群类→lookalike）
 - **RAG 知识库**：9 篇真实公开文档 → 82 个语义块（**幂等入库**，重跑结果一致）；回答带来源引用；**无关问题实测正确拒答**
 - **检索调优**：定位切块过碎问题（平均 **40 → 294 字**）；发现向量检索分数无区分度（相关 0.842 / 不相关 0.797）后，将相关性判断交由大模型结合上下文处理
-- **可观测与评测**：**19 条自动化测试用例**（14 条纯本地 / 2 条含数据库 / 3 条真实 API·live 门控；含守卫绕过与尾分号回归固化）；每步执行日志可追溯；token 成本统计
-- **RAG 检索评测**：自建 20 题评测集（基础 15 题 + 口语化 5 题·刻意不用文档原词），**top-3 命中率均 100%**（按 `source` 文档名判定）
+- **可观测与评测**：**19 条自动化测试用例**（14 条纯本地 / 2 条含数据库 / 3 条真实 API·live 门控；含守卫绕过与尾分号回归固化）；每步执行日志可追溯；token 成本统计（单次端到端 ≈ ¥0.05 为演示实测估算，随问题复杂度与输入长度浮动）
+- **RAG 检索评测**：自建 20 题评测集（基础 15 题 + 口语化 5 题·刻意不用文档原词），**top-3 来源命中率 100%**——口径注意：判定的是"正确来源文档出现在 top-3"，衡量检索层召回，不等同于最终回答正确率（回答质量另需端到端评估）
 - **Web 界面**：Streamlit 一句话输入 → 回答 + 报告链接 + 执行过程展开
+
+**深度自查**（本项目相对"跑通 Demo"的追加项，全部有代码/测试/截图对应）：自研 ≥4 工具 ✓（6）· 真实知识库 ✓（禁 AI 生成）· 场景化提示词 ✓ · 自有模块标注 ✓ · 自动化测试 ✓ · 三层安全防御含权限兜底 ✓
 
 ## 快速开始
 
-> 以下命令以 **PowerShell**（Windows）为例。
+> 以 PowerShell（Windows）为例，五步从零到跑通。**第 1、3、4 步只需做一次**（初始化），第 5 步是日常运行。
 
 ```powershell
-# 1. 依赖（注意：OpenManus 基座为 uv 管理的 venv，无 pip）
-uv pip install -r requirements.txt --python <你的 OpenManus venv 路径>\Scripts\python.exe
+# ── 1. 底座与解释器（一次性）──────────────────────────
+# 本仓库不内含 OpenManus 框架，需要先准备它（uv 会自动建 .venv）：
+git clone https://github.com/FoundationAgents/OpenManus.git
+cd OpenManus; uv sync; cd ..          # 装好后解释器在 <OpenManus>\.venv\Scripts\python.exe
+# 把 DeepSeek API key 填入 OpenManus\config\config.toml 的 [llm] 段
 
-# 2. 初始化数据库（用 root 账号建表与灌数据）
-$env:MYSQL_PASSWORD="<root 密码>"
+# ── 2. 本项目依赖（一次性）────────────────────────────
+uv pip install -r requirements.txt --python <OpenManus路径>\.venv\Scripts\python.exe
+
+# ── 3. 数据初始化（一次性）：建 3 表 + 灌入 200/100/1000 行 + 建只读账号 ──
+$env:MYSQL_PASSWORD = "<root密码>"
 python scripts/w2_setup/one_click_init.py
+#    只读账号 ecom_ro 按 scripts/w2_setup/README.md 中 SQL 创建（GRANT SELECT）
 
-# 3a. 命令行运行（查询走只读账号）
-$env:MYSQL_RO_PASSWORD="<只读账号密码>"; $env:ZHIPU_API_KEY="sk-..."
-python scripts/run_agent.py
+# ── 4. 知识库构建（一次性）─────────────────────────────
+#    语料位置：$env:ECOM_RAW_DIR（默认 <项目盘>\knowledge\raw，本仓库不含语料原文，
+#    9 篇清单与 URL 见 data/knowledge/MANIFEST.csv，自行采集后放入）
+#    本步会调用智谱 embedding（产生少量费用），产出 82 块向量库到 ECOM_KB_DIR
+$env:ZHIPU_API_KEY = "sk-..."
+python scripts/w3_setup/ingest_corpus.py
 
-# 3b. Web 界面（注意：必须在同一终端窗口先设环境变量）
-$env:MYSQL_RO_PASSWORD="<只读账号密码>"; $env:ZHIPU_API_KEY="sk-..."
+# ── 5. 运行（日常）：环境变量必须在同一终端窗口设置 ─────
+$env:MYSQL_RO_USER = "ecom_ro"; $env:MYSQL_RO_PASSWORD = "<只读密码>"; $env:ZHIPU_API_KEY = "sk-..."
+# 命令行：
+python scripts/run_agent.py "分析月度销售趋势并生成报告"
+# 或 Web 界面（浏览器自动打开 http://localhost:8501）：
 python -m streamlit run app/web/streamlit_app.py
 ```
 
-> ⚠️ **环境变量不跨窗口**：Streamlit 必须在**同一个终端窗口**里设好环境变量后再启动，否则会报密钥缺失。
+> 🔐 **账号分工**：root 仅用于第 3 步建表；日常查询全部走 `ecom_ro` 只读账号（仅 `GRANT SELECT`）——数据库权限层是守卫之外的第二道兜底，也是"三层防御"的第三层。
 
-> 🔐 **账号分工**：`MYSQL_PASSWORD`（root）仅用于**初始化建表**；`MYSQL_RO_USER` / `MYSQL_RO_PASSWORD`（只读账号，仅 `GRANT SELECT`）用于**所有查询**——数据库层兜底防御。
+> ⚙️ **换机器/换目录**：只需覆盖这几个环境变量（不设则用演示机默认值），然后重跑第 4 步即可——
+> `OPENMANUS_HOME`（OpenManus 根目录）· `ECOM_DATA_DIR`（CSV 数据）· `ECOM_RAW_DIR`（语料）· `ECOM_KB_DIR`（向量库）。
 
-> ⚙️ **路径可配置**：关键路径默认指向演示机（`D:\projects\...`），换环境时用环境变量覆盖——`OPENMANUS_HOME`（OpenManus 根目录）、`ECOM_DATA_DIR`（CSV 数据目录）、`ECOM_KB_DIR`（向量库目录）。不设则使用默认值。
-
-## 运行前提与常见错误
-
-**跑起来需要四样（缺一会在启动时报可读错误）**：
-1. **环境**：Python 3.12 + 一份装好依赖的 OpenManus venv（本项目复用其解释器，项目侧依赖见 `requirements.txt`）；
-2. **数据库**：本机 MySQL 8 且已初始化——`python scripts/w2_setup/one_click_init.py`（建 3 表 200/100/1000；建表用 root、查询走只读账号）；
-3. **知识库**：`python scripts/w3_setup/ingest_corpus.py` 跑一次（读默认演示机路径的 `raw/` 9 篇语料，产出 82 块向量库）；
-4. **密钥**：DeepSeek key 在 OpenManus `config/config.toml`；`$env:MYSQL_RO_USER / MYSQL_RO_PASSWORD / ZHIPU_API_KEY` 在**启动同一终端**设置（换机器再加 `OPENMANUS_HOME / ECOM_DATA_DIR / ECOM_KB_DIR`）。
+**常见报错速查**
 
 | 症状 | 先查什么 |
 |---|---|
-| `1045 / 1142` | 只读账号密码错 / 权限层正常拒绝（1142=用只读账号干了写事，是好事） |
-| "知识库打开失败" | `ECOM_KB_DIR` 路径，或先跑第 3 步 ingest |
-| HTTP 429 | 读**响应体业务码**再动手：1113=欠费充值 / 1302=限流（ingest/评测已内置间隔+退避） / 1308=额度上限 |
-| 启动即报环境变量未设 | 忘了同窗口设置（双击 bat 会开新进程，这就是 README 不用 bat 的原因） |
+| `1045 / 1142` | 只读账号密码错 / 1142=权限层正确拒绝了写操作（是好事） |
+| "知识库打开失败" | 第 4 步没跑，或 `ECOM_KB_DIR` 指错 |
+| HTTP 429 | 读**响应体业务码**再动手：1113=欠费充值 / 1302=限流（脚本已内置间隔+退避）/ 1308=额度上限 |
+| 启动即报环境变量未设 | 没在同一终端设置——双击 .bat 会开新进程丢变量，故本 README 不用 bat |
 
 ## 技术要点与踩坑精选
 
@@ -144,15 +152,9 @@ python -m streamlit run app/web/streamlit_app.py
 
 **OpenManus 底座（MIT 协议，原样复用）**：ReAct 循环（`think` / `act`）、工具基类与注册机制、LLM 封装与单例计数、消息与记忆机制、卡死检测与 `max_steps`。
 
-## 生产化设计说明（未实施，仅为设计）
+## 后续规划（设计已想清，**未实施**）
 
-若要把本项目容器化上线，我会这样切分：
-
-1. **镜像分层**：`python:slim` 基础层 → 依赖层 → 应用层，依赖层可缓存复用；
-2. **数据与密钥**：`knowledge/`（向量库持久目录）与 `workspace/`（图表与报告产物）挂 volume，避免容器重建丢数据；密钥经环境变量注入，**不烧进镜像**；
-3. **服务编排**：`docker-compose` 起两个服务——`mysql`（含初始化脚本挂载）与 `agent`（Streamlit 界面；**API 服务化评估后暂不采用**——本项目定位是单用户演示应用，Web 框架的并发与鉴权能力用不上）；
-4. **健康检查**：容器 healthcheck 探测 Web 端口与 MySQL 连通性；
-5. **多阶段构建**：构建期装依赖、运行期只保留运行时依赖，压缩镜像体积。
+容器化上线的设想：镜像分层（slim 基础层/依赖层/应用层）· 向量库与产物挂 volume、密钥只注入不烧录 · compose 编排 mysql+agent 双服务 + healthcheck。当前定位是**单用户演示应用**，这些不在必做路径上；API 服务化经评估暂不采用（用不上并发与鉴权）。（注：本节是规划，不是已完成能力。）
 
 ## 数据说明
 
@@ -161,15 +163,6 @@ python -m streamlit run app/web/streamlit_app.py
 - **知识库语料**：9 篇真实公开文档（金蝶官方帮助文档 5 篇 + 商业百科词条 3 篇 + 干扰项对照 1 篇），**全部人工采集，无 AI 生成内容**
 - **运行产物**：`workspace/charts/` 与 `workspace/reports/` 为运行产物（带时间戳，不入库、可整体清空重跑）
 - **报告可转发**：HTML 报告单文件自包含（图表内联），可直接发给运营同事；**打开需联网**（plotly.js 走 CDN——10KB 体积与离线可用的取舍）
-
-## 二次开发深度验收清单
-
-- [x] 自研工具 ≥ 4 个（实际 6 个）
-- [x] 自建知识库（9 篇真实文档，非 AI 生成）
-- [x] 场景化提示词（角色定位 / 工具分流 / 输出约束）
-- [x] README 标注自有模块
-- [x] 自动化测试用例（19 条）
-- [x] 三层安全防御（含实测证据：只读账号 `DROP` 被拒）
 
 ## 致谢与许可
 
